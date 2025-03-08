@@ -12,9 +12,9 @@ type Reader struct {
 	len    int
 }
 
-func (r *Reader) SetFullBytes(bs []byte) {
+func (r *Reader) SetFullBytes(bs []byte, len int) {
 	r.buf = bs
-	r.len = len(bs)
+	r.len = len
 }
 
 func (r *Reader) readByte() (byte, error) {
@@ -123,6 +123,10 @@ func (r *Reader) StringUTF(x *string) error {
 	}
 	*x = string(strbytes)
 	return nil
+}
+
+func (r *Reader) End() bool {
+	return r.offset >= r.len
 }
 
 func ReadSlice[T any](r *Reader, f func(*T) error) ([]T, error) {

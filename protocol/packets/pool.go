@@ -1,7 +1,9 @@
 package packets
 
 const (
-	IDClientLogin = iota
+	IDClientHandshake = iota + 1
+	IDServerHandshake
+	IDClientLogin
 	IDClientLoginResp
 	IDKickClient
 	IDDialLag
@@ -12,16 +14,18 @@ const (
 )
 
 var ClientPool = map[uint32]func() ClientPacket{
-	IDClientLogin: func() ClientPacket { return &ClientLogin{} },
-	IDDialLag:     func() ClientPacket { return &DialLag{} },
-	IDSimpleEvent: func() ClientPacket { return &SimpleEvent{} },
+	IDClientHandshake: func() ClientPacket { return &ClientHandshake{} },
+	IDClientLogin:     func() ClientPacket { return &ClientLogin{} },
+	IDDialLag:         func() ClientPacket { return &DialLag{} },
+	IDSimpleEvent:     func() ClientPacket { return &SimpleEvent{} },
 }
 
 var ServerPool = map[uint32]func() ServerPacket{
 	IDClientLoginResp:  func() ServerPacket { return &ClientLoginResp{} },
+	IDServerHandshake:  func() ServerPacket { return &ServerHandshake{} },
+	IDKickClient:       func() ServerPacket { return &KickClient{} },
 	IDDialLagResp:      func() ServerPacket { return &DialLagResp{} },
 	IDPlayerBasics:     func() ServerPacket { return &PlayerBasics{} },
-	IDKickClient:       func() ServerPacket { return &KickClient{} },
 	IDBackpackResponse: func() ServerPacket { return &BackpackResponse{} },
 	IDSimpleEvent:      func() ServerPacket { return &SimpleEvent{} },
 }

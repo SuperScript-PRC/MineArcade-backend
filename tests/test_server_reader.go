@@ -20,8 +20,8 @@ func HandleConnection(conn net.Conn) {
 	reader := protocol.Reader{}
 	var str string
 	bs := make([]byte, 1024)
-	conn.Read(bs)
-	reader.SetFullBytes(bs)
+	n, _ := conn.Read(bs)
+	reader.SetFullBytes(bs, n)
 	fmt.Printf("bts=%v\n", bs)
 	reader.StringUTF(&str)
 	fmt.Println("str=" + str)
