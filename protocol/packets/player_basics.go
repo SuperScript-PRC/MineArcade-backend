@@ -3,6 +3,7 @@ package packets
 import "MineArcade-backend/protocol"
 
 // 描述玩家基本信息。
+// 在玩家登录成功, 发送了 ClientLoginResp 后发送。
 type PlayerBasics struct {
 	// 玩家的昵称
 	Nickname string

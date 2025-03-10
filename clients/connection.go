@@ -1,6 +1,7 @@
 package clients
 
 import (
+	"MineArcade-backend/clients/password_manage"
 	"MineArcade-backend/defines"
 	"MineArcade-backend/protocol/packets"
 	"net"
@@ -10,19 +11,10 @@ import (
 
 func HandleConnection(conn net.Conn) {
 	defer conn.Close()
-	cli := NetClient{Conn: conn}
-	pks, err := cli.ReadPackets()
-	if err != nil || len(pks) == 0 {
-		if err != nil {
-			pterm.Error.Println("读取数据包出错:", err)
-		} else if len(pks) == 0 {
-			pterm.Error.Println("没有读取到数据包")
-		}
-		return
-	}
-	like_handshake_pk := pks[0]
-	if like_handshake_pk == nil {
-		pterm.Error.Println("Read packet is nil")
+	cli := NetClient{Conn: conn, IPString: conn.RemoteAddr().String()}
+	like_handshake_pk, err := cli.ReadNextPacket()
+	if err != nil {
+		pterm.Error.Println("读取数据包出错:", err)
 		return
 	}
 	handshake_pk, ok := like_handshake_pk.(*packets.ClientHandshake)
@@ -54,8 +46,54 @@ func HandleConnection(conn net.Conn) {
 	}
 	cli.WritePacket(&packets.ServerHandshake{
 		Success:       true,
-		ServerMessage: "连接成功",
+		ServerMessage: "哈基印，你这家伙，呀嘞呀嘞",
 		ServerVersion: defines.MINEARCADE_VERSION,
 	})
-	pterm.Info.Println(cli.Conn.RemoteAddr().String() + ": 连接完成")
+	pterm.Success.Printfln("%v 握手成功", cli.IPString)
+	// wait login
+	for {
+		like_login_pk, err := cli.ReadNextPacket()
+		if err != nil {
+			pterm.Error.Println("读取数据包出错:", err)
+			return
+		}
+		login_pk, ok := like_login_pk.(*packets.ClientLogin)
+		if !ok {
+			cli.WritePacket(&packets.ServerHandshake{
+				Success:       false,
+				ServerMessage: "Login packet ERROR",
+				ServerVersion: defines.MINEARCADE_VERSION,
+			})
+			pterm.Error.Printfln("%v 登录失败: 客户端登录包错误: ID=%v", cli.IPString, like_login_pk.ID())
+			return
+		}
+		if !password_manage.IsAccountOK(login_pk.Username, login_pk.Password) {
+			cli.WritePacket(&packets.ClientLoginResp{
+				Success:    false,
+				Message:    "账号或密码错误",
+				StatusCode: 1,
+			})
+			pterm.Warning.Printfln("%v 登录失败: 账号或密码错误: %v, %v", cli.IPString, login_pk.Username, login_pk.Password)
+		} else {
+			pterm.Success.Printfln("%v 登录成功", cli.IPString)
+			cli.WritePacket(&packets.ClientLoginResp{
+				Success:    true,
+				Message:    "登录成功",
+				StatusCode: 0,
+			})
+			break
+		}
+	}
+	cli.WritePacket(&packets.PlayerBasics{
+		Nickname:   "Super",
+		UUID:       "1234567890",
+		Money:      1000,
+		Power:      100,
+		Points:     120,
+		Level:      1,
+		Exp:        0,
+		ExpUpgrade: 0,
+	})
+	cli.ReadPackets()
+	pterm.Info.Println(cli.IPString + ": 连接完成")
 }

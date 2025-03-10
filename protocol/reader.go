@@ -12,7 +12,13 @@ type Reader struct {
 	len    int
 }
 
+func (r *Reader) AddFullBytes(bs []byte, len int) {
+	r.buf = bs
+	r.len = len
+}
+
 func (r *Reader) SetFullBytes(bs []byte, len int) {
+	r.offset = 0
 	r.buf = bs
 	r.len = len
 }

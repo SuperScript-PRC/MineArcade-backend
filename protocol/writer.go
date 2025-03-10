@@ -53,10 +53,9 @@ func (w *Writer) UInt64(x int64) {
 }
 
 func (w *Writer) Double(x float64) {
-	bs := make([]byte, 8)
-	buf := bytes.NewBuffer(bs)
+	buf := bytes.NewBuffer([]byte{})
 	binary.Write(buf, binary.BigEndian, x)
-	w.writeBytes(bs)
+	w.writeBytes(buf.Bytes())
 }
 
 func (w *Writer) Bool(x bool) {

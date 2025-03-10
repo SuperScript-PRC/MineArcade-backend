@@ -13,6 +13,7 @@ const (
 	IDSimpleEvent
 )
 
+// 客户端 -> 服务端 数据包
 var ClientPool = map[uint32]func() ClientPacket{
 	IDClientHandshake: func() ClientPacket { return &ClientHandshake{} },
 	IDClientLogin:     func() ClientPacket { return &ClientLogin{} },
@@ -20,6 +21,7 @@ var ClientPool = map[uint32]func() ClientPacket{
 	IDSimpleEvent:     func() ClientPacket { return &SimpleEvent{} },
 }
 
+// 服务端 -> 客户端 数据包
 var ServerPool = map[uint32]func() ServerPacket{
 	IDClientLoginResp:  func() ServerPacket { return &ClientLoginResp{} },
 	IDServerHandshake:  func() ServerPacket { return &ServerHandshake{} },
