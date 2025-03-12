@@ -6,10 +6,21 @@ import (
 	"fmt"
 )
 
+type SupportUnmarshal interface {
+	Unmarshal(r *Reader) error
+}
+
 type Reader struct {
 	buf    []byte
 	offset int
 	len    int
+}
+
+func NewReader(bs []byte) Reader {
+	r := Reader{}
+	r.buf = bs
+	r.len = len(bs)
+	return r
 }
 
 func (r *Reader) AddFullBytes(bs []byte, len int) {
@@ -39,6 +50,28 @@ func (r *Reader) readBytes(n int) ([]byte, error) {
 	bs := r.buf[r.offset : r.offset+n]
 	r.offset += n
 	return bs, nil
+}
+
+func (r *Reader) Bytes(bs *[]byte) error {
+	var length int32
+	err := r.Int32(&length)
+	if err != nil {
+		return err
+	}
+	*bs, err = r.readBytes(int(length))
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *Reader) UInt8(x *uint8) error {
+	b, err := r.readByte()
+	if err != nil {
+		return err
+	}
+	*x = b
+	return nil
 }
 
 func (r *Reader) Int8(x *int8) error {
@@ -135,17 +168,18 @@ func (r *Reader) End() bool {
 	return r.offset >= r.len
 }
 
-func ReadSlice[T any](r *Reader, f func(*T) error) ([]T, error) {
+func ReadSlice[T SupportUnmarshal](r *Reader, s *[]T) error {
 	var length int32
-	var s []T
-	var t T
+	var _s []T
 	r.Int32(&length)
 	for range length {
-		err := f(&t)
+		var t T
+		err := t.Unmarshal(r)
 		if err != nil {
-			return nil, err
+			return err
 		}
-		s = append(s, t)
+		_s = append(_s, t)
 	}
-	return s, nil
+	*s = _s
+	return nil
 }

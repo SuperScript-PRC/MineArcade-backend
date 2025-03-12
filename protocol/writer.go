@@ -10,6 +10,14 @@ type Writer struct {
 	len int
 }
 
+type SupportMarshal interface {
+	Marshal(w *Writer)
+}
+
+func NewWriter() Writer {
+	return Writer{buf: []byte{}, len: 0}
+}
+
 func (w *Writer) writeByte(b byte) {
 	w.buf = append(w.buf, b)
 	w.len++
@@ -24,8 +32,20 @@ func (w *Writer) GetFullBytes() []byte {
 	return w.buf
 }
 
-func (w *Writer) Int8(x int8) {
+func (w *Writer) Bytes(bs []byte) {
+	if len(bs) > 0x7FFFFFFF {
+		panic("string length overflows a 32-bit integer")
+	}
+	w.Int32(int32(len(bs)))
+	w.writeBytes(bs)
+}
+
+func (w *Writer) UInt8(x uint8) {
 	w.writeByte(byte(x))
+}
+
+func (w *Writer) Int8(x int8) {
+	w.writeByte(byte(uint8(x)))
 }
 
 func (w *Writer) Int16(x int16) {
@@ -74,16 +94,9 @@ func (w *Writer) StringUTF(x string) {
 	w.writeBytes([]byte(x))
 }
 
-func WriteSlice[T any](w *Writer, s []T, f func(T)) {
+func WriteSlice[T SupportMarshal](w *Writer, s []T) {
 	w.Int32(int32(len(s)))
 	for _, i := range s {
-		f(i)
-	}
-}
-
-func WriteSliceWithNewMarshaler[T any](w *Writer, s []T, f func(w *Writer, _ *T)) {
-	w.Int32(int32(len(s)))
-	for _, i := range s {
-		f(w, &i)
+		i.Marshal(w)
 	}
 }

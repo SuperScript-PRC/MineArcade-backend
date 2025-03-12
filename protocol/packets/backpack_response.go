@@ -19,11 +19,12 @@ func (p *BackpackResponse) ID() uint32 {
 	return IDBackpackResponse
 }
 
-func MarshalBackpackItem(w *protocol.Writer, it *Item) {
+// cannot use *Item (protocol.WriteSlice)
+func (it Item) Marshal(w *protocol.Writer) {
 	w.Int32(it.ID)
 	w.Int32(it.Amount)
 }
 
 func (p *BackpackResponse) Marshal(w *protocol.Writer) {
-	protocol.WriteSliceWithNewMarshaler(w, p.Items, MarshalBackpackItem)
+	protocol.WriteSlice(w, p.Items)
 }
