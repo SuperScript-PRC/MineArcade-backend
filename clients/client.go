@@ -16,7 +16,7 @@ type NetClient struct {
 }
 
 func (c *NetClient) WritePacket(p packets.ServerPacket) error {
-	w := protocol.Writer{}
+	w := protocol.NewWriter()
 	w.Int32(int32(p.ID()))
 	p.Marshal(&w)
 	_, err := c.Conn.Write(w.GetFullBytes())
@@ -30,8 +30,7 @@ func (c *NetClient) ReadPackets() ([]packets.ClientPacket, error) {
 	if err != nil {
 		return nil, err
 	}
-	r := protocol.Reader{}
-	r.AddFullBytes(buf, n)
+	r := protocol.NewReader(buf[:n])
 	for {
 		if r.End() {
 			break
@@ -55,6 +54,7 @@ func (c *NetClient) ReadNextPacket() (packets.ClientPacket, error) {
 	} else {
 		buf := make([]byte, 524288) // 512KB
 		n, err := c.Conn.Read(buf)
+		// todo
 		if err != nil {
 			return nil, err
 		}

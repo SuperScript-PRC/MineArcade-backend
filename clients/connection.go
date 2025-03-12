@@ -1,7 +1,7 @@
 package clients
 
 import (
-	"MineArcade-backend/clients/password_manage"
+	"MineArcade-backend/clients/accountants"
 	"MineArcade-backend/defines"
 	"MineArcade-backend/protocol/packets"
 	"net"
@@ -46,7 +46,7 @@ func HandleConnection(conn net.Conn) {
 	}
 	cli.WritePacket(&packets.ServerHandshake{
 		Success:       true,
-		ServerMessage: "哈基印，你这家伙，呀嘞呀嘞",
+		ServerMessage: "",
 		ServerVersion: defines.MINEARCADE_VERSION,
 	})
 	pterm.Success.Printfln("%v 握手成功", cli.IPString)
@@ -67,10 +67,11 @@ func HandleConnection(conn net.Conn) {
 			pterm.Error.Printfln("%v 登录失败: 客户端登录包错误: ID=%v", cli.IPString, like_login_pk.ID())
 			return
 		}
-		if !password_manage.IsAccountOK(login_pk.Username, login_pk.Password) {
+		accountant_ok, reason := accountants.IsAccountOK(login_pk.Username, login_pk.Password)
+		if !accountant_ok {
 			cli.WritePacket(&packets.ClientLoginResp{
 				Success:    false,
-				Message:    "账号或密码错误",
+				Message:    reason,
 				StatusCode: 1,
 			})
 			pterm.Warning.Printfln("%v 登录失败: 账号或密码错误: %v, %v", cli.IPString, login_pk.Username, login_pk.Password)

@@ -95,6 +95,8 @@ func (w *Writer) StringUTF(x string) {
 }
 
 func WriteSlice[T SupportMarshal](w *Writer, s []T) {
+	// 不可传入类似 (t *Type)Marshal(w *Writer)
+	// 将 (t *Type) 改为 (t Type)
 	w.Int32(int32(len(s)))
 	for _, i := range s {
 		i.Marshal(w)

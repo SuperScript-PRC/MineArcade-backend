@@ -7,7 +7,7 @@ import (
 )
 
 type SupportUnmarshal interface {
-	Unmarshal(r *Reader) error
+	Unmarshal(r *Reader)
 }
 
 type Reader struct {
@@ -168,18 +168,21 @@ func (r *Reader) End() bool {
 	return r.offset >= r.len
 }
 
-func ReadSlice[T SupportUnmarshal](r *Reader, s *[]T) error {
+func ReadSlice[T SupportUnmarshal](r *Reader, s *[]T) (e error) {
+	defer func() {
+		if err := recover(); err != nil {
+			*s = nil
+			e = err.(error)
+		}
+	}()
 	var length int32
 	var _s []T
 	r.Int32(&length)
 	for range length {
 		var t T
-		err := t.Unmarshal(r)
-		if err != nil {
-			return err
-		}
+		t.Unmarshal(r)
 		_s = append(_s, t)
 	}
 	*s = _s
-	return nil
+	return
 }
