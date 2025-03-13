@@ -168,7 +168,10 @@ func (r *Reader) End() bool {
 	return r.offset >= r.len
 }
 
-func ReadSlice[T SupportUnmarshal](r *Reader, s *[]T) (e error) {
+func ReadSlice[T any, TPtr interface {
+	*T
+	SupportUnmarshal
+}](r *Reader, s *[]T) (e error) {
 	defer func() {
 		if err := recover(); err != nil {
 			*s = nil
@@ -176,13 +179,14 @@ func ReadSlice[T SupportUnmarshal](r *Reader, s *[]T) (e error) {
 		}
 	}()
 	var length int32
-	var _s []T
+	arr := make([]T, length)
 	r.Int32(&length)
-	for range length {
+	for i := range length {
 		var t T
-		t.Unmarshal(r)
-		_s = append(_s, t)
+		var tp TPtr = &t
+		tp.Unmarshal(r)
+		arr[i] = *tp
 	}
-	*s = _s
+	*s = arr
 	return
 }
