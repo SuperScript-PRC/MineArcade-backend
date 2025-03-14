@@ -11,6 +11,9 @@ const (
 	IDPlayerBasics
 	IDBackpackResponse
 	IDSimpleEvent
+	IDPublicMineAreaChunk
+	IDPublicMineAreaBlockEvent
+	IDPublicMineAreaPlayerActorEvent
 )
 
 // 客户端 -> 服务端 数据包
