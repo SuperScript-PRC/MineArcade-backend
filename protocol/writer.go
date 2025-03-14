@@ -94,11 +94,13 @@ func (w *Writer) StringUTF(x string) {
 	w.writeBytes([]byte(x))
 }
 
-func WriteSlice[T SupportMarshal](w *Writer, s []T) {
-	// 不可传入类似 (t *Type)Marshal(w *Writer)
-	// 将 (t *Type) 改为 (t Type)
+func WriteSlice[T any, TPtr interface {
+	*T
+	SupportMarshal
+}](w *Writer, s []T) {
 	w.Int32(int32(len(s)))
-	for _, i := range s {
-		i.Marshal(w)
+	for _, it := range s {
+		var it_ptr TPtr = &it
+		it_ptr.Marshal(w)
 	}
 }
