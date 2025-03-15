@@ -20,7 +20,7 @@ func (p *BackpackResponse) ID() uint32 {
 }
 
 // cannot use *Item (protocol.WriteSlice)
-func (it Item) Marshal(w *protocol.Writer) {
+func (it *Item) Marshal(w *protocol.Writer) {
 	w.Int32(it.ID)
 	w.Int32(it.Amount)
 }

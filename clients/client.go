@@ -1,6 +1,8 @@
 package clients
 
 import (
+	"MineArcade-backend/clients/accounts"
+	"MineArcade-backend/clients/player_store"
 	"MineArcade-backend/protocol"
 	"MineArcade-backend/protocol/decoder"
 	"MineArcade-backend/protocol/packets"
@@ -9,10 +11,11 @@ import (
 )
 
 type NetClient struct {
-	Conn     net.Conn
-	IPString string
-	Username string
-	r        protocol.Reader
+	Conn      net.Conn
+	IPString  string
+	AuthInfo  *accounts.UserAuthInfo
+	StoreInfo *player_store.PlayerStore
+	pkReader  protocol.Reader
 }
 
 func (c *NetClient) WritePacket(p packets.ServerPacket) error {
@@ -23,30 +26,9 @@ func (c *NetClient) WritePacket(p packets.ServerPacket) error {
 	return err
 }
 
-func (c *NetClient) ReadPackets() ([]packets.ClientPacket, error) {
-	buf := make([]byte, 1048576)
-	var pks []packets.ClientPacket
-	n, err := c.Conn.Read(buf)
-	if err != nil {
-		return nil, err
-	}
-	r := protocol.NewReader(buf[:n])
-	for {
-		if r.End() {
-			break
-		}
-		pk, err := decoder.DecodeClientPacket(&r)
-		if err != nil {
-			return nil, err
-		}
-		pks = append(pks, pk)
-	}
-	return pks, nil
-}
-
 func (c *NetClient) ReadNextPacket() (packets.ClientPacket, error) {
-	if !c.r.End() {
-		pk, err := decoder.DecodeClientPacket(&c.r)
+	if !c.pkReader.End() {
+		pk, err := decoder.DecodeClientPacket(&c.pkReader)
 		if err != nil {
 			return nil, err
 		}
@@ -61,7 +43,15 @@ func (c *NetClient) ReadNextPacket() (packets.ClientPacket, error) {
 		if n == 0 {
 			return nil, fmt.Errorf("EOF")
 		}
-		c.r.SetFullBytes(buf, n)
+		c.pkReader.SetFullBytes(buf, n)
 		return c.ReadNextPacket()
 	}
+}
+
+func (c *NetClient) InitAuthInfo(info *accounts.UserAuthInfo) {
+	c.AuthInfo = info
+}
+
+func (c *NetClient) InitStoreInfo(info *player_store.PlayerStore) {
+	c.StoreInfo = info
 }

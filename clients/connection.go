@@ -1,7 +1,8 @@
 package clients
 
 import (
-	"MineArcade-backend/clients/accountants"
+	"MineArcade-backend/clients/accounts"
+	"MineArcade-backend/clients/player_store"
 	"MineArcade-backend/defines"
 	"MineArcade-backend/protocol/packets"
 	"net"
@@ -52,6 +53,7 @@ func HandleConnection(conn net.Conn) {
 	pterm.Success.Printfln("%v 握手成功", cli.IPString)
 	// wait login
 	for {
+		// password trial
 		like_login_pk, err := cli.ReadNextPacket()
 		if err != nil {
 			pterm.Error.Println("读取数据包出错:", err)
@@ -67,7 +69,7 @@ func HandleConnection(conn net.Conn) {
 			pterm.Error.Printfln("%v 登录失败: 客户端登录包错误: ID=%v", cli.IPString, like_login_pk.ID())
 			return
 		}
-		accountant_ok, reason := accountants.IsAccountOK(login_pk.Username, login_pk.Password)
+		accountant_ok, reason := accounts.IsAccountOK(login_pk.Username, login_pk.Password)
 		if !accountant_ok {
 			cli.WritePacket(&packets.ClientLoginResp{
 				Success:    false,
@@ -82,19 +84,26 @@ func HandleConnection(conn net.Conn) {
 				Message:    "登录成功",
 				StatusCode: 0,
 			})
+			userinfo, ok := accounts.GetUserAuthInfo(login_pk.Username)
+			if !ok {
+				panic("Auth failed?? Shouldn't be happened")
+			}
+			cli.InitAuthInfo(userinfo)
 			break
 		}
 	}
+	store := player_store.ReadPlayerStore(cli.AuthInfo.UUIDStr)
+	cli.InitStoreInfo(store)
 	cli.WritePacket(&packets.PlayerBasics{
-		Nickname:   "Super",
-		UUID:       "1234567890",
-		Money:      1000,
-		Power:      100,
-		Points:     120,
-		Level:      1,
-		Exp:        0,
-		ExpUpgrade: 0,
+		Nickname:   store.Nickname,
+		UUID:       cli.AuthInfo.UUIDStr,
+		Money:      store.Money,
+		Power:      store.Power,
+		Points:     store.Points,
+		Level:      store.Level,
+		Exp:        store.Exp,
+		ExpUpgrade: store.ExpUpgrade,
 	})
-	cli.ReadPackets()
+	cli.ReadNextPacket()
 	pterm.Info.Println(cli.IPString + ": 连接完成")
 }

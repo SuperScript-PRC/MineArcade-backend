@@ -1,12 +1,8 @@
-package accountants
+package accounts
 
 import (
 	"MineArcade-backend/protocol"
-
-	"github.com/syndtr/goleveldb/leveldb"
 )
-
-var db *leveldb.DB
 
 type UserAuthInfo struct {
 	AccountName string
@@ -29,11 +25,8 @@ func (u *UserAuthInfo) Unmarshal(r *protocol.Reader) {
 	r.StringUTF(&u.UUIDStr)
 }
 
-func OpenDB() (*leveldb.DB, error) {
-	return leveldb.OpenFile("./db", nil)
-}
-
 func IsPasswordCorrect(username string, passwordMD5 string) (bool, string) {
+	db = OpenAccountDB()
 	raw_data, err := db.Get([]byte(username), nil)
 	if err != nil {
 		return false, "用户名不存在"
@@ -46,4 +39,16 @@ func IsPasswordCorrect(username string, passwordMD5 string) (bool, string) {
 	} else {
 		return true, ""
 	}
+}
+
+func GetUserAuthInfo(username string) (*UserAuthInfo, bool) {
+	db = OpenAccountDB()
+	raw_data, err := db.Get([]byte(username), nil)
+	if err != nil {
+		return nil, false
+	}
+	reader := protocol.NewReader(raw_data)
+	user_auth_info := &UserAuthInfo{}
+	user_auth_info.Unmarshal(&reader)
+	return user_auth_info, true
 }

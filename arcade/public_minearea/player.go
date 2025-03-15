@@ -9,11 +9,11 @@ import (
 const PLAYER_SIGHT = 64
 
 type MineAreaPlayer struct {
-	Map     MineAreaMap
-	Client  clients.NetClient
-	UUIDStr string
-	Nicknme string
 	// X, Y: 在以一方块为单位的坐标系中的位置
+	Map        MineAreaMap
+	Client     clients.NetClient
+	UUIDStr    string
+	Nicknme    string
 	X          float64
 	Y          float64
 	VisiChunks []bool

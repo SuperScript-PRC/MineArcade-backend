@@ -1,7 +1,9 @@
 package public_minearea
 
 import (
+	"MineArcade-backend/defines"
 	"fmt"
+	"os"
 )
 
 const MAP_CHUNK_HEIGHT = 32
@@ -46,7 +48,7 @@ func (m *MineAreaMap) ModifyChunk(chunk *Chunk) error {
 	return nil
 }
 
-// 将地图数据序列化成二进制流
+// 将地图数据序列化为二进制流
 func (m *MineAreaMap) Marshal() [TOTAL_BLOCK_NUM]byte {
 	var mdata [TOTAL_BLOCK_NUM]byte
 	i := 0
@@ -68,4 +70,46 @@ func (m *MineAreaMap) Unmarshal(mdata [TOTAL_BLOCK_NUM]byte) {
 			i++
 		}
 	}
+}
+
+func ReadMapFile() (*MineAreaMap, error) {
+	_, err := os.Stat(defines.MAP_PATH)
+	var file *os.File
+	if err != nil {
+		file, err = os.Create(defines.MAP_PATH)
+		if err != nil {
+			return nil, fmt.Errorf("create map file error: " + err.Error())
+		}
+		var bs = SpawnMineAreaMap().Marshal()
+		file.Write(bs[:])
+		file.Seek(0, 0)
+	} else {
+		file, err = os.Open(defines.MAP_PATH)
+		if err != nil {
+			return nil, fmt.Errorf("open map file error: " + err.Error())
+		}
+	}
+	defer file.Close()
+	content := make([]byte, TOTAL_BLOCK_NUM)
+	n, err := file.Read(content)
+	if err != nil {
+		return nil, fmt.Errorf("read map file error: " + err.Error())
+	}
+	if n != TOTAL_BLOCK_NUM {
+		return nil, fmt.Errorf("map file size error: %v", n)
+	}
+	mmap := &MineAreaMap{}
+	mmap.Unmarshal([262144]byte(content))
+	return mmap, nil
+}
+
+func SaveMapFile(mmap *MineAreaMap) error {
+	file, err := os.OpenFile(defines.MAP_PATH, os.O_WRONLY, 0644)
+	if err != nil {
+		return fmt.Errorf("open map file error: " + err.Error())
+	}
+	defer file.Close()
+	bs := mmap.Marshal()
+	file.Write(bs[:])
+	return nil
 }
