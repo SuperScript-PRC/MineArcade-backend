@@ -55,3 +55,10 @@ func (c *NetClient) InitAuthInfo(info *accounts.UserAuthInfo) {
 func (c *NetClient) InitStoreInfo(info *player_store.PlayerStore) {
 	c.StoreInfo = info
 }
+
+func (c *NetClient) Kick(kick_msg string) {
+	c.WritePacket(&packets.KickClient{
+		Message: kick_msg,
+	})
+	c.Conn.Close()
+}

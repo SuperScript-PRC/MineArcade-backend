@@ -1,8 +1,13 @@
 package player_store
 
-import "MineArcade-backend/protocol"
+import (
+	"MineArcade-backend/protocol"
+	"fmt"
+	"sync"
+)
 
 type PlayerStore struct {
+	bp         sync.Mutex
 	Nickname   string
 	Points     int32
 	Power      int32
@@ -54,6 +59,50 @@ func (ps *PlayerStore) Unmarshal(r *protocol.Reader) {
 	r.Int32(&ps.ExpUpgrade)
 	r.Double(&ps.Money)
 	protocol.ReadSlice(r, &ps.Backpack)
+}
+
+func (it *Item) Add(amount int32) {
+	it.Amount += amount
+}
+
+func (it *Item) Reduce(amount int32) bool {
+	it.Amount -= amount
+	if it.Amount < 0 {
+		panic(fmt.Errorf("Item: %v count = %v, < 0", it.ID, it.Amount))
+	}
+	return it.Amount == 0
+}
+
+func (ps *PlayerStore) AddItem(itemID int32, amount int32) (new bool) {
+	defer ps.bp.Unlock()
+	ps.bp.Lock()
+	new = false
+	for i, item := range ps.Backpack {
+		if item.ID == itemID {
+			item.Add(amount)
+			ps.Backpack[i] = item
+			return
+		}
+	}
+	new = true
+	ps.Backpack = append(ps.Backpack, Item{ID: itemID, Amount: amount})
+	return
+}
+
+func (ps *PlayerStore) ReduceItem(itemID int32, amount int32) (none bool) {
+	defer ps.bp.Unlock()
+	ps.bp.Lock()
+	none = false
+	for i, item := range ps.Backpack {
+		if item.ID == itemID {
+			none = item.Reduce(amount)
+			if none {
+				ps.Backpack = append(ps.Backpack[:i], ps.Backpack[i+1:]...)
+			}
+			return
+		}
+	}
+	panic(fmt.Errorf("item id %v not in backpack", itemID))
 }
 
 func NewPlayerStore() *PlayerStore {

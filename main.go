@@ -1,9 +1,9 @@
 package main
 
 import (
-	"MineArcade-backend/server"
+	"MineArcade-backend/entry"
 )
 
 func main() {
-	server.TestServer()
+	entry.Entry()
 }

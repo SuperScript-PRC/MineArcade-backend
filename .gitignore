@@ -1,3 +1,6 @@
 # Initial settings
 tests/
 dev/
+
+# Data files
+mine-arcade/

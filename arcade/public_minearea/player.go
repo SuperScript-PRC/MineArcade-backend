@@ -10,16 +10,14 @@ const PLAYER_SIGHT = 64
 
 type MineAreaPlayer struct {
 	// X, Y: 在以一方块为单位的坐标系中的位置
-	Map        MineAreaMap
-	Client     clients.NetClient
-	UUIDStr    string
-	Nicknme    string
+	Map        *MineAreaMap
+	Client     *clients.NetClient
 	X          float64
 	Y          float64
 	VisiChunks []bool
 }
 
-func (player *MineAreaPlayer) UpdateFromPacket(p *packets.PlayerActorData) {
+func (player *MineAreaPlayer) UpdateFromPacket(p *packets.PublicMineareaPlayerActorData) {
 	player.X = p.X
 	player.Y = p.Y
 }
@@ -44,6 +42,27 @@ func (player *MineAreaPlayer) loadChunk(x, y uint) {
 	}
 }
 
-func (player *MineAreaPlayer) unloadChunk(x, y uint) {
-	player.VisiChunks[y*MAP_CHUNK_WIDTH+x] = false
+func (player *MineAreaPlayer) unloadChunk(chunkX, chunkY uint) {
+	player.VisiChunks[chunkY*MAP_CHUNK_WIDTH+chunkX] = false
+}
+
+func (player *MineAreaPlayer) ChunkLoaded(chunkX, chunkY uint) bool {
+	return player.VisiChunks[chunkY*MAP_CHUNK_WIDTH+chunkX]
+}
+
+func (player *MineAreaPlayer) TryUpdateBlock(pk *packets.PublicMineareaBlockEvent) {
+	chunk_x, chunk_y := ConvertToChunkXY(uint(pk.BlockX), uint(pk.BlockY))
+	if player.ChunkLoaded(chunk_x, chunk_y) {
+		player.Client.WritePacket(pk)
+	}
+}
+
+func NewPlayer(mmap *MineAreaMap, cli *clients.NetClient, x, y float64) *MineAreaPlayer {
+	return &MineAreaPlayer{
+		Map:        mmap,
+		Client:     cli,
+		VisiChunks: make([]bool, MAP_CHUNK_HEIGHT*MAP_CHUNK_WIDTH),
+		X:          x,
+		Y:          y,
+	}
 }

@@ -39,7 +39,16 @@ func NewChunk(chunkX, chunkY uint, chunkData []byte) *Chunk {
 }
 
 func NewEmptyChunk(chunkX, chunkY uint) *Chunk {
-	return NewChunk(chunkX, chunkY, make([]byte, CHUNK_SIZE*CHUNK_SIZE))
+	bts := [CHUNK_SIZE * CHUNK_SIZE]byte{}
+	return NewChunk(chunkX, chunkY, bts[:])
+}
+
+func AlignToChunk(x, y uint) (uint, uint) {
+	return x / CHUNK_SIZE * CHUNK_SIZE, y / CHUNK_SIZE * CHUNK_SIZE
+}
+
+func ConvertToChunkXY(x, y uint) (uint, uint) {
+	return x / CHUNK_SIZE, y / CHUNK_SIZE
 }
 
 func GetChunkXYByIndex(index uint) (uint, uint) {

@@ -8,11 +8,13 @@ import (
 
 const MAP_CHUNK_HEIGHT = 32
 const MAP_CHUNK_WIDTH = 32
-
 const MAP_BORDER_X = MAP_CHUNK_WIDTH * CHUNK_SIZE
 const MAP_BORDER_Y = MAP_CHUNK_HEIGHT * CHUNK_SIZE
 
 const TOTAL_BLOCK_NUM = MAP_CHUNK_WIDTH * MAP_CHUNK_HEIGHT * CHUNK_SIZE * CHUNK_SIZE
+
+const PLAYER_SPAWN_X float64 = MAP_BORDER_X / 2
+const PLAYER_SPAWN_Y float64 = MAP_BORDER_Y - CHUNK_SIZE
 
 // 地图长宽为 32x32 区块
 // 按地图最左方为 x = 0
@@ -50,11 +52,16 @@ func (m *MineAreaMap) ModifyChunk(chunk *Chunk) error {
 
 // 将地图数据序列化为二进制流
 func (m *MineAreaMap) Marshal() [TOTAL_BLOCK_NUM]byte {
-	var mdata [TOTAL_BLOCK_NUM]byte
+	mdata := [TOTAL_BLOCK_NUM]byte{}
 	i := 0
+	j := 0
 	for _, chunk := range m.ChunkData {
-		for j := range CHUNK_SIZE * CHUNK_SIZE {
-			mdata[i] = chunk.ChunkData[j]
+		if chunk == nil {
+			panic(fmt.Errorf("nil chunk: %v", j))
+		}
+		j++
+		for j1 := range CHUNK_SIZE * CHUNK_SIZE {
+			mdata[i] = chunk.ChunkData[j1]
 			i++
 		}
 	}
@@ -63,31 +70,36 @@ func (m *MineAreaMap) Marshal() [TOTAL_BLOCK_NUM]byte {
 
 // 从二进制流中读取地图数据
 func (m *MineAreaMap) Unmarshal(mdata [TOTAL_BLOCK_NUM]byte) {
-	i := 0
-	for _, chunk := range &m.ChunkData {
-		for j := range CHUNK_SIZE * CHUNK_SIZE {
-			chunk.ChunkData[j] = mdata[i]
-			i++
-		}
+	const c = CHUNK_SIZE * CHUNK_SIZE
+	for j := range MAP_CHUNK_HEIGHT * MAP_CHUNK_WIDTH {
+		chunkX := j % MAP_CHUNK_HEIGHT
+		chunkY := j / MAP_CHUNK_HEIGHT
+		chunk := NewEmptyChunk(uint(chunkX), uint(chunkY))
+		chunk.ChunkData = mdata[j*c : (j+1)*c]
+		m.ModifyChunk(chunk)
 	}
 }
 
 func ReadMapFile() (*MineAreaMap, error) {
 	_, err := os.Stat(defines.MAP_PATH)
 	var file *os.File
-	if err != nil {
+	if os.IsNotExist(err) {
+		var bs = SpawnMineAreaMap().Marshal()
 		file, err = os.Create(defines.MAP_PATH)
 		if err != nil {
-			return nil, fmt.Errorf("create map file error: " + err.Error())
+			return nil, fmt.Errorf("create map file error: %v", err)
 		}
-		var bs = SpawnMineAreaMap().Marshal()
-		file.Write(bs[:])
-		file.Seek(0, 0)
-	} else {
-		file, err = os.Open(defines.MAP_PATH)
-		if err != nil {
-			return nil, fmt.Errorf("open map file error: " + err.Error())
+		n, err := file.Write(bs[:])
+		if n == 0 {
+			panic("write 0 byte info map file")
+		} else if err != nil {
+			return nil, fmt.Errorf("write map file error: " + err.Error())
 		}
+		file.Close()
+	}
+	file, err = os.Open(defines.MAP_PATH)
+	if err != nil {
+		return nil, fmt.Errorf("open map file error: " + err.Error())
 	}
 	defer file.Close()
 	content := make([]byte, TOTAL_BLOCK_NUM)

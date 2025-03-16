@@ -13,7 +13,7 @@ type PublicMineAreaChunk struct {
 }
 
 func (p *PublicMineAreaChunk) ID() uint32 {
-	return IDPublicMineAreaChunk
+	return IDPublicMineareaChunk
 }
 
 func (p *PublicMineAreaChunk) Marshal(w *protocol.Writer) {
