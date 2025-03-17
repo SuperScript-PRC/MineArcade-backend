@@ -10,11 +10,13 @@ import (
 var db *leveldb.DB
 
 func OpenPlayerStoreDB() *leveldb.DB {
-	ldb, err := leveldb.OpenFile(defines.PLAYER_STORE_DB_PATH, nil)
-	if err != nil {
-		panic(err)
+	if db == nil {
+		ldb, err := leveldb.OpenFile(defines.PLAYER_STORE_DB_PATH, nil)
+		if err != nil {
+			panic(err)
+		}
+		db = ldb
 	}
-	db = ldb
 	return db
 }
 

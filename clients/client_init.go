@@ -10,13 +10,13 @@ import (
 	"github.com/pterm/pterm"
 )
 
-func HandleConnection(conn net.Conn) {
+func HandleConnection(conn net.Conn) (*NetClient, bool) {
 	defer conn.Close()
 	cli := NetClient{Conn: conn, IPString: conn.RemoteAddr().String()}
 	like_handshake_pk, err := cli.ReadNextPacket()
 	if err != nil {
 		pterm.Error.Println("读取数据包出错:", err)
-		return
+		return nil, false
 	}
 	handshake_pk, ok := like_handshake_pk.(*packets.ClientHandshake)
 	if !ok {
@@ -26,7 +26,7 @@ func HandleConnection(conn net.Conn) {
 			ServerVersion: defines.MINEARCADE_VERSION,
 		})
 		pterm.Error.Printfln("握手失败: 客户端握手包错误: ID=%v", like_handshake_pk.ID())
-		return
+		return nil, false
 	}
 	if handshake_pk.ClientVersion < defines.MINEARCADE_VERSION {
 		cli.WritePacket(&packets.ServerHandshake{
@@ -35,7 +35,7 @@ func HandleConnection(conn net.Conn) {
 			ServerVersion: defines.MINEARCADE_VERSION,
 		})
 		pterm.Error.Printfln("握手失败: 客户端版本 %v < %v", handshake_pk.ClientVersion, defines.MINEARCADE_VERSION)
-		return
+		return nil, false
 	} else if handshake_pk.ClientVersion > defines.MINEARCADE_VERSION {
 		cli.WritePacket(&packets.ServerHandshake{
 			Success:       false,
@@ -43,7 +43,7 @@ func HandleConnection(conn net.Conn) {
 			ServerVersion: defines.MINEARCADE_VERSION,
 		})
 		pterm.Error.Printfln("握手失败: 客户端版本 %v > %v", handshake_pk.ClientVersion, defines.MINEARCADE_VERSION)
-		return
+		return nil, false
 	}
 	cli.WritePacket(&packets.ServerHandshake{
 		Success:       true,
@@ -57,7 +57,7 @@ func HandleConnection(conn net.Conn) {
 		like_login_pk, err := cli.ReadNextPacket()
 		if err != nil {
 			pterm.Error.Println("读取数据包出错:", err)
-			return
+			return nil, false
 		}
 		login_pk, ok := like_login_pk.(*packets.ClientLogin)
 		if !ok {
@@ -67,7 +67,7 @@ func HandleConnection(conn net.Conn) {
 				ServerVersion: defines.MINEARCADE_VERSION,
 			})
 			pterm.Error.Printfln("%v 登录失败: 客户端登录包错误: ID=%v", cli.IPString, like_login_pk.ID())
-			return
+			return nil, false
 		}
 		accountant_ok, reason := accounts.IsAccountOK(login_pk.Username, login_pk.Password)
 		if !accountant_ok {
@@ -104,6 +104,5 @@ func HandleConnection(conn net.Conn) {
 		Exp:        store.Exp,
 		ExpUpgrade: store.ExpUpgrade,
 	})
-	cli.ReadNextPacket()
-	pterm.Info.Println(cli.IPString + ": 连接完成")
+	return &cli, true
 }

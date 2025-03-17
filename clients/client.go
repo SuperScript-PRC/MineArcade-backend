@@ -8,6 +8,8 @@ import (
 	"MineArcade-backend/protocol/packets"
 	"fmt"
 	"net"
+
+	"github.com/pterm/pterm"
 )
 
 type NetClient struct {
@@ -60,5 +62,6 @@ func (c *NetClient) Kick(kick_msg string) {
 	c.WritePacket(&packets.KickClient{
 		Message: kick_msg,
 	})
+	pterm.Warning.Printfln("踢出客户端 %s: %s", c.IPString, kick_msg)
 	c.Conn.Close()
 }

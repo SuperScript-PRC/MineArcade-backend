@@ -26,6 +26,7 @@ var ClientPool = map[uint32]func() ClientPacket{
 	IDSimpleEvent:                   func() ClientPacket { return &SimpleEvent{} },
 	IDPublicMineareaBlockEvent:      func() ClientPacket { return &PublicMineareaBlockEvent{} },
 	IDPublicMineareaPlayerActorData: func() ClientPacket { return &PublicMineareaPlayerActorData{} },
+	IDArcadeEntryRequest:            func() ClientPacket { return &ArcadeEntryRequest{} },
 }
 
 // 服务端 -> 客户端 数据包

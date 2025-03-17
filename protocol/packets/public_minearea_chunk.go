@@ -7,7 +7,7 @@ import (
 type PublicMineAreaChunk struct {
 	ChunkX int32
 	ChunkY int32
-	// 一个区块包含 64x64 个方块
+	// 一个区块包含 16x16 个方块
 	// []xy
 	ChunkData []byte
 }

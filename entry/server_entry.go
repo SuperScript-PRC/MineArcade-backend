@@ -1,7 +1,6 @@
-package server
+package entry
 
 import (
-	"MineArcade-backend/clients"
 	"fmt"
 	"net"
 
@@ -21,7 +20,7 @@ func TestServer() {
 			break
 		}
 		pterm.Info.Println("新连接: ", con.RemoteAddr().String())
-		go clients.HandleConnection(con)
+		go HandleClientConnection(con)
 	}
 	fmt.Println("Exit.")
 }

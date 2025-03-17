@@ -11,6 +11,9 @@ import (
 var mmap *MineAreaMap
 var players map[string]*MineAreaPlayer
 
+const PLAYER_SPAWNPOINT_X = MAP_BORDER_X / 2
+const PLAYER_SPAWNPOINT_Y = MAP_BORDER_Y - CHUNK_SIZE
+
 func Launch() {
 	var err error
 	mmap, err = ReadMapFile()
@@ -28,11 +31,10 @@ func PlayerEntry(cli *clients.NetClient) {
 		cli.Kick("This arcade game isn't starting.")
 		return
 	}
-	player := NewPlayer(mmap, cli, PLAYER_SPAWN_X, PLAYER_SPAWN_Y)
+	player := NewPlayer(mmap, cli, PLAYER_SPAWNPOINT_X, PLAYER_SPAWNPOINT_Y)
 	players[cli.AuthInfo.UUIDStr] = player
-	defer func() {
-		delete(players, cli.AuthInfo.UUIDStr)
-	}()
+	defer RemovePlayer(player)
+	AddPlayer(player)
 	var player_move_broadcast_cd float32
 	var player_update_chunk_cd float32
 	for {
@@ -61,9 +63,34 @@ func PlayerEntry(cli *clients.NetClient) {
 				p.TryUpdateBlock(pk)
 			})
 		} else {
-
+			cli.Kick("不合法的操作")
+			return
 		}
 	}
+}
+
+func AddPlayer(player *MineAreaPlayer) {
+	players[player.Client.AuthInfo.UUIDStr] = player
+	ForOtherPlayers(player.Client.AuthInfo.UUIDStr, func(p *MineAreaPlayer) {
+		p.Client.WritePacket(&packets.PublicMineareaPlayerActorData{
+			UUIDStr: player.Client.AuthInfo.UUIDStr,
+			X:       player.X,
+			Y:       player.Y,
+			Action:  packets.MineAreaPlayerActionAddPlayer,
+		})
+	})
+}
+
+func RemovePlayer(player *MineAreaPlayer) {
+	delete(players, player.Client.AuthInfo.UUIDStr)
+	ForOtherPlayers(player.Client.AuthInfo.UUIDStr, func(p *MineAreaPlayer) {
+		p.Client.WritePacket(&packets.PublicMineareaPlayerActorData{
+			UUIDStr: player.Client.AuthInfo.UUIDStr,
+			X:       player.X,
+			Y:       player.Y,
+			Action:  packets.MineAreaPlayerActionRemovePlayer,
+		})
+	})
 }
 
 func ForAllPlayers(f func(*MineAreaPlayer)) {
@@ -77,5 +104,11 @@ func ForOtherPlayers(senderUUID string, f func(*MineAreaPlayer)) {
 		if senderUUID != uuid {
 			f(player)
 		}
+	}
+}
+
+func Exit() {
+	if mmap != nil {
+		SaveMapFile(mmap)
 	}
 }

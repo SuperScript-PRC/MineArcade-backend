@@ -3,4 +3,4 @@ tests/
 dev/
 
 # Data files
-mine-arcade/
+.mine_arcade/

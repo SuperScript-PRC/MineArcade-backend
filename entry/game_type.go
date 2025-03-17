@@ -1,6 +1,6 @@
 package entry
 
 const (
-	MAIN = iota
+	GAMETYPE_LOBBY = iota
 	GAMETYPE_PUBLIC_MINEAREA
 )

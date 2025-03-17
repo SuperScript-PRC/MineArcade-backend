@@ -33,6 +33,17 @@ func (player *MineAreaPlayer) UpdatePlayerSightChunks() {
 	}
 }
 
+func (player *MineAreaPlayer) Teleport(x, y float64) {
+	player.X = x
+	player.Y = y
+	player.Client.WritePacket(&packets.PublicMineareaPlayerActorData{
+		UUIDStr: player.Client.AuthInfo.UUIDStr,
+		X:       x,
+		Y:       y,
+		Action:  0,
+	})
+}
+
 func (player *MineAreaPlayer) loadChunk(x, y uint) {
 	index := y*MAP_CHUNK_WIDTH + x
 	if !player.VisiChunks[index] {
@@ -58,11 +69,13 @@ func (player *MineAreaPlayer) TryUpdateBlock(pk *packets.PublicMineareaBlockEven
 }
 
 func NewPlayer(mmap *MineAreaMap, cli *clients.NetClient, x, y float64) *MineAreaPlayer {
-	return &MineAreaPlayer{
+	player := &MineAreaPlayer{
 		Map:        mmap,
 		Client:     cli,
 		VisiChunks: make([]bool, MAP_CHUNK_HEIGHT*MAP_CHUNK_WIDTH),
 		X:          x,
 		Y:          y,
 	}
+	player.Teleport(x, y)
+	return player
 }

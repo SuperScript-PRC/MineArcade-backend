@@ -4,11 +4,18 @@ import (
 	"MineArcade-backend/protocol"
 )
 
+const (
+	MineAreaPlayerActionNone = iota
+	MineAreaPlayerActionAddPlayer
+	MineAreaPlayerActionRemovePlayer
+)
+
 type PublicMineareaPlayerActorData struct {
-	UUIDStr string
-	X       float64
-	Y       float64
-	Action  uint8
+	Nickname string
+	UUIDStr  string
+	X        float64
+	Y        float64
+	Action   int8
 }
 
 func (ad *PublicMineareaPlayerActorData) ID() uint32 {
@@ -16,15 +23,17 @@ func (ad *PublicMineareaPlayerActorData) ID() uint32 {
 }
 
 func (ad *PublicMineareaPlayerActorData) Marshal(w *protocol.Writer) {
+	w.StringUTF(ad.Nickname)
 	w.StringUTF(ad.UUIDStr)
 	w.Double(ad.X)
 	w.Double(ad.Y)
-	w.UInt8(ad.Action)
+	w.Int8(ad.Action)
 }
 
 func (ad *PublicMineareaPlayerActorData) Unmarshal(r *protocol.Reader) {
+	r.StringUTF(&ad.Nickname)
 	r.StringUTF(&ad.UUIDStr)
 	r.Double(&ad.X)
 	r.Double(&ad.Y)
-	r.UInt8(&ad.Action)
+	r.Int8(&ad.Action)
 }
