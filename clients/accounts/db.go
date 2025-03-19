@@ -3,6 +3,7 @@ package accounts
 import (
 	"MineArcade-backend/defines"
 	"MineArcade-backend/protocol"
+	"strings"
 
 	"github.com/df-mc/goleveldb/leveldb"
 	"github.com/pterm/pterm"
@@ -12,7 +13,7 @@ var db *leveldb.DB
 
 func OpenAccountDB() *leveldb.DB {
 	if db == nil {
-		pterm.Info.Println("正在读取账号数据库")
+		// pterm.Info.Println("正在读取账号数据库")
 		ldb, err := leveldb.OpenFile(defines.ACCOUNT_DB_PATH, nil)
 		if err != nil {
 			panic(err)
@@ -36,6 +37,9 @@ func OpenAccountDB() *leveldb.DB {
 
 func GetUserAuthInfo(username string) (*UserAuthInfo, bool) {
 	db = OpenAccountDB()
+	if strings.HasPrefix(username, "__") {
+		return nil, false
+	}
 	raw_data, err := db.Get([]byte(username), nil)
 	if err != nil {
 		return nil, false

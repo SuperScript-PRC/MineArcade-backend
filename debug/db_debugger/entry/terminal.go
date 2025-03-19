@@ -3,11 +3,9 @@ package entry
 import (
 	"MineArcade-backend/clients/accounts"
 	"MineArcade-backend/clients/player_store"
-	"MineArcade-backend/protocol"
 	"crypto/md5"
 	"encoding/base64"
 	"fmt"
-	"strings"
 )
 
 func Main() {
@@ -17,8 +15,9 @@ func Main() {
 	defer store_db.Close()
 	for {
 		fmt.Println("----------- MineArcade Manager -----------")
-		fmt.Println("  1. 添加账号  2. 删除账号 3. 账号列表")
-		fmt.Println("  4. 修改账号  5. 退出")
+		fmt.Println("       1. 添加账号       2. 删除账号       ")
+		fmt.Println("       3. 账号列表       4. 账号信息       ")
+		fmt.Println("       5. 修改账号       6. 退出系统       ")
 		fmt.Println("------------------------------------------")
 		fmt.Print("请选择选项> ")
 		var section string
@@ -35,6 +34,8 @@ func Main() {
 		case "3":
 			ListAccounts()
 		case "4":
+			CheckAccount()
+		case "5":
 			ModifyAccount()
 		default:
 			return
@@ -46,35 +47,36 @@ func AddAccount() {
 	fmt.Print("请输入账号名: ")
 	var account_name string
 	_, err := fmt.Scanf("%s ", &account_name)
-	if err != nil || strings.HasPrefix(account_name, "__") {
+	if err != nil {
 		fmt.Println("输入错误")
 		return
-	}
-	if _, ok := accounts.GetUserAuthInfo(account_name); ok {
+	} else if ok, msg := accounts.AccountNameValid(account_name); !ok {
+		fmt.Println("账号名无效:", msg)
+		return
+	} else if _, ok := accounts.GetUserAuthInfo(account_name); ok {
 		fmt.Println("账号已存在")
 		return
 	}
-	for {
-		fmt.Print("请输入密码: ")
-		var password string
-		_, err = fmt.Scanf("%s ", &password)
-		if err != nil {
-			fmt.Println("输入错误")
-			return
-		}
-		fmt.Print("请输入昵称: ")
-		var nickname string
-		_, err = fmt.Scanf("%s ", &nickname)
-		if err != nil {
-			fmt.Println("输入错误")
-			return
-		}
-		pwdMD5 := md5.Sum([]byte(password))
-		account := accounts.NewUserAuthInfo(account_name, base64.StdEncoding.EncodeToString(pwdMD5[:]), nickname)
-		store := player_store.NewPlayerStore()
-		player_store.SavePlayerStore(account.UIDStr, store)
-		fmt.Println("账号创建成功")
+	fmt.Print("请输入密码: ")
+	var password string
+	_, err = fmt.Scanf("%s ", &password)
+	if err != nil {
+		fmt.Println("输入错误")
+		return
 	}
+	fmt.Print("请输入昵称: ")
+	var nickname string
+	_, err = fmt.Scanf("%s ", &nickname)
+	if err != nil {
+		fmt.Println("输入错误")
+		return
+	}
+	pwdMD5 := md5.Sum([]byte(password))
+	account := accounts.NewUserAuthInfo(account_name, base64.StdEncoding.EncodeToString(pwdMD5[:]), nickname)
+	store := player_store.NewPlayerStore()
+	accounts.SaveUserAuthInfo(account)
+	player_store.SavePlayerStore(account.UIDStr, store)
+	fmt.Println("账号创建成功")
 }
 
 func RemoveAccount() {
@@ -83,7 +85,7 @@ func RemoveAccount() {
 	var account_name string
 	fmt.Print("请输入账号名: ")
 	_, err := fmt.Scanf("%s ", &account_name)
-	if err != nil || strings.HasPrefix(account_name, "__") {
+	if err != nil {
 		fmt.Println("输入错误")
 		return
 	}
@@ -96,6 +98,26 @@ func RemoveAccount() {
 	fmt.Println("账号删除成功")
 }
 
+func CheckAccount() {
+	fmt.Print("请输入账号名: ")
+	var account_name string
+	_, err := fmt.Scanf("%s ", &account_name)
+	if err != nil {
+		fmt.Println("输入错误")
+		return
+	}
+	account, ok := accounts.GetUserAuthInfo(account_name)
+	if !ok {
+		fmt.Println("账号不存在")
+		return
+	}
+	store := player_store.ReadPlayerStore(account.UIDStr)
+	fmt.Printf("账号名: %s, 昵称: %s, UID: %s\n", account.AccountName, account.Nickname, account.UIDStr)
+	fmt.Printf("金币: %v, 体力: %d, 点数: %d\n", store.Money, store.Power, store.Points)
+	fmt.Printf("等级: %d, 经验值: %d, 升级所需经验: %d\n", store.Level, store.Exp, store.ExpUpgrade)
+	fmt.Printf("背包内物品数: %d\n", len(store.Backpack))
+}
+
 func ListAccounts() {
 	account_db := accounts.OpenAccountDB()
 	iter := account_db.NewIterator(nil, nil)
@@ -103,11 +125,10 @@ func ListAccounts() {
 	for iter.Next() {
 		acc := &accounts.UserAuthInfo{}
 		account_name := string(iter.Key())
-		if strings.HasPrefix(account_name, "__") {
+		acc, ok := accounts.GetUserAuthInfo(account_name)
+		if !ok {
 			continue
 		}
-		r := protocol.NewReader(iter.Value())
-		acc.Unmarshal(&r)
 		fmt.Printf("账号名: %s  昵称: %s\n", account_name, acc.Nickname)
 	}
 }
@@ -116,7 +137,7 @@ func ModifyAccount() {
 	var username string
 	fmt.Print("请输入账号名: ")
 	_, err := fmt.Scanf("%s ", &username)
-	if err != nil || strings.HasPrefix(username, "__") {
+	if err != nil {
 		fmt.Println("输入错误")
 		return
 	}
