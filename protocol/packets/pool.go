@@ -16,6 +16,7 @@ const (
 	IDPublicMineareaPlayerActorData
 	IDArcadeEntryRequest
 	IDArcadeEntryResponse
+	IDStartGame
 )
 
 // 客户端 -> 服务端 数据包
@@ -27,6 +28,7 @@ var ClientPool = map[uint32]func() ClientPacket{
 	IDPublicMineareaBlockEvent:      func() ClientPacket { return &PublicMineareaBlockEvent{} },
 	IDPublicMineareaPlayerActorData: func() ClientPacket { return &PublicMineareaPlayerActorData{} },
 	IDArcadeEntryRequest:            func() ClientPacket { return &ArcadeEntryRequest{} },
+	IDStartGame:                     func() ClientPacket { return &StartGame{} },
 }
 
 // 服务端 -> 客户端 数据包

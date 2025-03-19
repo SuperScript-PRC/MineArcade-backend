@@ -52,13 +52,13 @@ func ConvertToChunkXY(x, y uint) (uint, uint) {
 }
 
 func GetChunkXYByIndex(index uint) (uint, uint) {
-	chunkX := index % CHUNK_SIZE
-	chunkY := index / CHUNK_SIZE
-	return chunkX * CHUNK_SIZE, chunkY * CHUNK_SIZE
+	chunkX := index % MAP_CHUNK_WIDTH
+	chunkY := index / MAP_CHUNK_WIDTH
+	return chunkX, chunkY
 }
 
 func GetChunkCenterXYByIndex(index int) (int, int) {
-	chunkX := index % CHUNK_SIZE
-	chunkY := index / CHUNK_SIZE
+	chunkX := index % MAP_CHUNK_WIDTH
+	chunkY := index / MAP_CHUNK_WIDTH
 	return chunkX*CHUNK_SIZE + HALF_CHUNK_SIZE, chunkY*CHUNK_SIZE + HALF_CHUNK_SIZE
 }

@@ -7,8 +7,8 @@ import "MineArcade-backend/protocol"
 type PlayerBasics struct {
 	// 玩家的昵称
 	Nickname string
-	// 玩家的 UUID
-	UUID string
+	// 玩家的 UID
+	UID string
 	// 玩家的钱数
 	Money float64
 	// 玩家的体力值
@@ -29,7 +29,7 @@ func (p *PlayerBasics) ID() uint32 {
 
 func (p *PlayerBasics) Marshal(w *protocol.Writer) {
 	w.StringUTF(p.Nickname)
-	w.StringUTF(p.UUID)
+	w.StringUTF(p.UID)
 	w.Double(p.Money)
 	w.Int32(p.Power)
 	w.Int32(p.Points)

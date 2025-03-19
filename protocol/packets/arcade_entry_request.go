@@ -5,7 +5,7 @@ import "MineArcade-backend/protocol"
 type ArcadeEntryRequest struct {
 	ArcadeGameType int8
 	EntryID        string
-	RequestUUID    string
+	ResponseUUID   string
 }
 
 func (p *ArcadeEntryRequest) ID() uint32 {
@@ -15,5 +15,5 @@ func (p *ArcadeEntryRequest) ID() uint32 {
 func (p *ArcadeEntryRequest) Unmarshal(r *protocol.Reader) {
 	r.Int8(&p.ArcadeGameType)
 	r.StringUTF(&p.EntryID)
-	r.StringUTF(&p.RequestUUID)
+	r.StringUTF(&p.ResponseUUID)
 }

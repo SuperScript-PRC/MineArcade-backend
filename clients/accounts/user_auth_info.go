@@ -2,27 +2,28 @@ package accounts
 
 import (
 	"MineArcade-backend/protocol"
+	"fmt"
 )
 
 type UserAuthInfo struct {
 	AccountName string
 	PasswordMD5 string
 	Nickname    string
-	UUIDStr     string
+	UIDStr      string
 }
 
 func (u *UserAuthInfo) Marshal(w *protocol.Writer) {
 	w.StringUTF(u.AccountName)
 	w.StringUTF(u.PasswordMD5)
 	w.StringUTF(u.Nickname)
-	w.StringUTF(u.UUIDStr)
+	w.StringUTF(u.UIDStr)
 }
 
 func (u *UserAuthInfo) Unmarshal(r *protocol.Reader) {
 	r.StringUTF(&u.AccountName)
 	r.StringUTF(&u.PasswordMD5)
 	r.StringUTF(&u.Nickname)
-	r.StringUTF(&u.UUIDStr)
+	r.StringUTF(&u.UIDStr)
 }
 
 func IsPasswordCorrect(username string, passwordMD5 string) (bool, string) {
@@ -41,14 +42,15 @@ func IsPasswordCorrect(username string, passwordMD5 string) (bool, string) {
 	}
 }
 
-func GetUserAuthInfo(username string) (*UserAuthInfo, bool) {
-	db = OpenAccountDB()
-	raw_data, err := db.Get([]byte(username), nil)
-	if err != nil {
-		return nil, false
-	}
-	reader := protocol.NewReader(raw_data)
-	user_auth_info := &UserAuthInfo{}
-	user_auth_info.Unmarshal(&reader)
-	return user_auth_info, true
+func NewUID() string {
+	curr := GetCurrentUIDIndex()
+	curr += 1
+	SetCurrentUIDIndex(curr)
+	return fmt.Sprintf("%x", curr)
+}
+
+func NewUserAuthInfo(account_name string, password_md5 string, nickname string) *UserAuthInfo {
+	info := &UserAuthInfo{AccountName: account_name, Nickname: nickname, PasswordMD5: password_md5}
+	info.UIDStr = NewUID()
+	return info
 }

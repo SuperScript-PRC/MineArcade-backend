@@ -20,8 +20,8 @@ func OpenPlayerStoreDB() *leveldb.DB {
 	return db
 }
 
-func ReadPlayerStore(playerUUID string) *PlayerStore {
-	inf, err := OpenPlayerStoreDB().Get([]byte(playerUUID), nil)
+func ReadPlayerStore(playerUID string) *PlayerStore {
+	inf, err := OpenPlayerStoreDB().Get([]byte(playerUID), nil)
 	if err != nil {
 		return NewPlayerStore()
 	} else {
@@ -32,8 +32,8 @@ func ReadPlayerStore(playerUUID string) *PlayerStore {
 	}
 }
 
-func SavePlayerStore(playerUUID string, playerStore *PlayerStore) {
+func SavePlayerStore(playerUID string, playerStore *PlayerStore) {
 	writer := protocol.NewWriter()
 	playerStore.Marshal(&writer)
-	OpenPlayerStoreDB().Put([]byte(playerUUID), writer.GetFullBytes(), nil)
+	OpenPlayerStoreDB().Put([]byte(playerUID), writer.GetFullBytes(), nil)
 }

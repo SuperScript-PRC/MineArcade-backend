@@ -3,6 +3,7 @@ package public_minearea
 import (
 	"MineArcade-backend/clients"
 	"MineArcade-backend/protocol/packets"
+	"fmt"
 	"math"
 )
 
@@ -25,7 +26,9 @@ func (player *MineAreaPlayer) UpdateFromPacket(p *packets.PublicMineareaPlayerAc
 func (player *MineAreaPlayer) UpdatePlayerSightChunks() {
 	for i := range MAP_CHUNK_HEIGHT * MAP_CHUNK_WIDTH {
 		cx, cy := GetChunkXYByIndex(uint(i))
-		if math.Abs(player.X-float64(cx+HALF_CHUNK_SIZE)) < PLAYER_SIGHT && math.Abs(player.Y-float64(cy+HALF_CHUNK_SIZE)) < PLAYER_SIGHT {
+		if math.Abs(player.X-float64(cx*CHUNK_SIZE+HALF_CHUNK_SIZE)) < PLAYER_SIGHT && math.Abs(player.Y-float64(cy*CHUNK_SIZE+HALF_CHUNK_SIZE)) < PLAYER_SIGHT {
+			fmt.Println("Load", cx, cy)
+			fmt.Println("Load1", player.X-float64(cx*CHUNK_SIZE+HALF_CHUNK_SIZE), player.Y-float64(cy*CHUNK_SIZE+HALF_CHUNK_SIZE))
 			player.loadChunk(cx, cy)
 		} else {
 			player.unloadChunk(cx, cy)
@@ -37,10 +40,10 @@ func (player *MineAreaPlayer) Teleport(x, y float64) {
 	player.X = x
 	player.Y = y
 	player.Client.WritePacket(&packets.PublicMineareaPlayerActorData{
-		UUIDStr: player.Client.AuthInfo.UUIDStr,
-		X:       x,
-		Y:       y,
-		Action:  0,
+		UIDStr: player.Client.AuthInfo.UIDStr,
+		X:      x,
+		Y:      y,
+		Action: 0,
 	})
 }
 

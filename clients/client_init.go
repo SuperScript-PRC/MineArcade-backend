@@ -11,7 +11,6 @@ import (
 )
 
 func HandleConnection(conn net.Conn) (*NetClient, bool) {
-	defer conn.Close()
 	cli := NetClient{Conn: conn, IPString: conn.RemoteAddr().String()}
 	like_handshake_pk, err := cli.ReadNextPacket()
 	if err != nil {
@@ -69,8 +68,8 @@ func HandleConnection(conn net.Conn) (*NetClient, bool) {
 			pterm.Error.Printfln("%v 登录失败: 客户端登录包错误: ID=%v", cli.IPString, like_login_pk.ID())
 			return nil, false
 		}
-		accountant_ok, reason := accounts.IsAccountOK(login_pk.Username, login_pk.Password)
-		if !accountant_ok {
+		account_ok, reason := accounts.IsAccountOK(login_pk.Username, login_pk.Password)
+		if !account_ok {
 			cli.WritePacket(&packets.ClientLoginResp{
 				Success:    false,
 				Message:    reason,
@@ -78,7 +77,6 @@ func HandleConnection(conn net.Conn) (*NetClient, bool) {
 			})
 			pterm.Warning.Printfln("%v 登录失败: 账号或密码错误: %v, %v", cli.IPString, login_pk.Username, login_pk.Password)
 		} else {
-			pterm.Success.Printfln("%v 登录成功", cli.IPString)
 			cli.WritePacket(&packets.ClientLoginResp{
 				Success:    true,
 				Message:    "登录成功",
@@ -89,14 +87,15 @@ func HandleConnection(conn net.Conn) (*NetClient, bool) {
 				panic("Auth failed?? Shouldn't be happened")
 			}
 			cli.InitAuthInfo(userinfo)
+			pterm.Success.Printfln("%v 登录成功, 账号: %v, UID: %v, 昵称: %v", cli.IPString, cli.AuthInfo.AccountName, cli.AuthInfo.UIDStr, cli.AuthInfo.Nickname)
 			break
 		}
 	}
-	store := player_store.ReadPlayerStore(cli.AuthInfo.UUIDStr)
+	store := player_store.ReadPlayerStore(cli.AuthInfo.UIDStr)
 	cli.InitStoreInfo(store)
 	cli.WritePacket(&packets.PlayerBasics{
 		Nickname:   store.Nickname,
-		UUID:       cli.AuthInfo.UUIDStr,
+		UID:        cli.AuthInfo.UIDStr,
 		Money:      store.Money,
 		Power:      store.Power,
 		Points:     store.Points,

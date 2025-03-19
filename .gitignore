@@ -4,3 +4,6 @@ dev/
 
 # Data files
 .mine_arcade/
+
+# Executable file
+*.exe

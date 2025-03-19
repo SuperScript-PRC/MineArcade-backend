@@ -8,6 +8,7 @@ import (
 	"MineArcade-backend/protocol/packets"
 	"fmt"
 	"net"
+	"time"
 
 	"github.com/pterm/pterm"
 )
@@ -60,8 +61,10 @@ func (c *NetClient) InitStoreInfo(info *player_store.PlayerStore) {
 
 func (c *NetClient) Kick(kick_msg string) {
 	c.WritePacket(&packets.KickClient{
-		Message: kick_msg,
+		Message:    kick_msg,
+		StatusCode: 0,
 	})
 	pterm.Warning.Printfln("踢出客户端 %s: %s", c.IPString, kick_msg)
+	time.Sleep(time.Second)
 	c.Conn.Close()
 }

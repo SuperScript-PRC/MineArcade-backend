@@ -1,4 +1,4 @@
-package entry
+package defines
 
 const (
 	GAMETYPE_LOBBY = iota
