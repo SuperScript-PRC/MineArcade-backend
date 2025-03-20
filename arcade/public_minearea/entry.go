@@ -6,15 +6,17 @@ import (
 	"MineArcade-backend/defines"
 	"MineArcade-backend/protocol/packets"
 	"fmt"
+	"sync"
 
 	"github.com/pterm/pterm"
 )
 
 var mmap *MineAreaMap
 var players = map[string]*MineAreaPlayer{}
+var player_lock = sync.Mutex{}
 
 const PLAYER_SPAWNPOINT_X = MAP_BORDER_X / 2
-const PLAYER_SPAWNPOINT_Y = MAP_BORDER_Y - CHUNK_SIZE
+const PLAYER_SPAWNPOINT_Y = MAP_BORDER_Y - CHUNK_SIZE*10 - 12
 
 func Launch() {
 	var err error
@@ -41,16 +43,17 @@ func PlayerEntry(cli *clients.NetClient) {
 	defer RemovePlayer(player)
 	AddPlayer(player)
 	player.UpdatePlayerSightChunks()
-	var player_move_broadcast_cd float32
-	var player_update_chunk_cd float32
+	var player_move_broadcast_cd float64
+	var player_update_chunk_cd float64
 	for {
 		p, err := cli.ReadNextPacket()
 		if err != nil {
 			cli.Kick("Broken packet")
 			return
 		}
-		nowtime := float32time()
+		nowtime := float64time()
 		if pk, ok := p.(*packets.PublicMineareaPlayerActorData); ok {
+			player.UpdateFromPacket(pk)
 			if nowtime-player_move_broadcast_cd > 0.05 {
 				// 避免过快收到移动数据包
 				player_move_broadcast_cd = nowtime
@@ -60,11 +63,12 @@ func PlayerEntry(cli *clients.NetClient) {
 			}
 			if nowtime-player_update_chunk_cd > 0.5 {
 				// 避免过于频繁地处理视野问题
+				player_update_chunk_cd = nowtime
 				player.UpdatePlayerSightChunks()
 			}
 		} else if pk, ok := p.(*packets.PublicMineareaBlockEvent); ok {
 			// TODO: can modify block without server valid checking
-			mmap.ModifyBlock(uint(pk.BlockX), uint(pk.BlockY), pk.NewBlock)
+			mmap.ModifyBlock(pk.BlockX, pk.BlockY, pk.NewBlock)
 			ForOtherPlayers(cli.AuthInfo.UIDStr, func(p *MineAreaPlayer) {
 				p.TryUpdateBlock(pk)
 			})
@@ -76,7 +80,9 @@ func PlayerEntry(cli *clients.NetClient) {
 }
 
 func AddPlayer(player *MineAreaPlayer) {
+	player_lock.Lock()
 	players[player.Client.AuthInfo.UIDStr] = player
+	player_lock.Unlock()
 	ForOtherPlayers(player.Client.AuthInfo.UIDStr, func(p *MineAreaPlayer) {
 		p.Client.WritePacket(&packets.PublicMineareaPlayerActorData{
 			UIDStr: player.Client.AuthInfo.UIDStr,
@@ -88,7 +94,9 @@ func AddPlayer(player *MineAreaPlayer) {
 }
 
 func RemovePlayer(player *MineAreaPlayer) {
+	player_lock.Lock()
 	delete(players, player.Client.AuthInfo.UIDStr)
+	player_lock.Unlock()
 	ForOtherPlayers(player.Client.AuthInfo.UIDStr, func(p *MineAreaPlayer) {
 		p.Client.WritePacket(&packets.PublicMineareaPlayerActorData{
 			UIDStr: player.Client.AuthInfo.UIDStr,
@@ -100,12 +108,16 @@ func RemovePlayer(player *MineAreaPlayer) {
 }
 
 func ForAllPlayers(f func(*MineAreaPlayer)) {
+	defer player_lock.Unlock()
+	player_lock.Lock()
 	for _, player := range players {
 		f(player)
 	}
 }
 
 func ForOtherPlayers(senderUID string, f func(*MineAreaPlayer)) {
+	defer player_lock.Unlock()
+	player_lock.Lock()
 	for uuid, player := range players {
 		if senderUID != uuid {
 			f(player)

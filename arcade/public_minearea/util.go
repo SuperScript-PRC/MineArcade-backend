@@ -2,6 +2,6 @@ package public_minearea
 
 import "time"
 
-func float32time() float32 {
-	return float32(time.Now().UnixNano()) / 1e9
+func float64time() float64 {
+	return float64(time.Now().UnixNano()) / 1e9
 }

@@ -3,11 +3,11 @@ package public_minearea
 import (
 	"MineArcade-backend/clients"
 	"MineArcade-backend/protocol/packets"
-	"fmt"
 	"math"
 )
 
-const PLAYER_SIGHT = 64
+const PLAYER_SIGHT_X = 48
+const PLAYER_SIGHT_Y = 32
 
 type MineAreaPlayer struct {
 	// X, Y: 在以一方块为单位的坐标系中的位置
@@ -25,13 +25,11 @@ func (player *MineAreaPlayer) UpdateFromPacket(p *packets.PublicMineareaPlayerAc
 
 func (player *MineAreaPlayer) UpdatePlayerSightChunks() {
 	for i := range MAP_CHUNK_HEIGHT * MAP_CHUNK_WIDTH {
-		cx, cy := GetChunkXYByIndex(uint(i))
-		if math.Abs(player.X-float64(cx*CHUNK_SIZE+HALF_CHUNK_SIZE)) < PLAYER_SIGHT && math.Abs(player.Y-float64(cy*CHUNK_SIZE+HALF_CHUNK_SIZE)) < PLAYER_SIGHT {
-			fmt.Println("Load", cx, cy)
-			fmt.Println("Load1", player.X-float64(cx*CHUNK_SIZE+HALF_CHUNK_SIZE), player.Y-float64(cy*CHUNK_SIZE+HALF_CHUNK_SIZE))
-			player.loadChunk(cx, cy)
+		chunkX, chunkY := GetChunkXYByIndex(int32(i))
+		if math.Abs(player.X-float64(chunkX*CHUNK_SIZE+HALF_CHUNK_SIZE)) < PLAYER_SIGHT_X && math.Abs(player.Y-float64(chunkY*CHUNK_SIZE+HALF_CHUNK_SIZE)) < PLAYER_SIGHT_Y {
+			player.loadChunk(chunkX, chunkY)
 		} else {
-			player.unloadChunk(cx, cy)
+			player.unloadChunk(chunkX, chunkY)
 		}
 	}
 }
@@ -47,8 +45,9 @@ func (player *MineAreaPlayer) Teleport(x, y float64) {
 	})
 }
 
-func (player *MineAreaPlayer) loadChunk(x, y uint) {
-	index := y*MAP_CHUNK_WIDTH + x
+func (player *MineAreaPlayer) loadChunk(chunkX, chunkY int32) {
+	index := chunkY*MAP_CHUNK_WIDTH + chunkX
+	// special
 	if !player.VisiChunks[index] {
 		pk := player.Map.ChunkData[index].ConvertToPacket()
 		player.Client.WritePacket(&pk)
@@ -56,16 +55,24 @@ func (player *MineAreaPlayer) loadChunk(x, y uint) {
 	}
 }
 
-func (player *MineAreaPlayer) unloadChunk(chunkX, chunkY uint) {
-	player.VisiChunks[chunkY*MAP_CHUNK_WIDTH+chunkX] = false
+func (player *MineAreaPlayer) unloadChunk(chunkX, chunkY int32) {
+	index := chunkY*MAP_CHUNK_WIDTH + chunkX
+	if player.VisiChunks[index] {
+		player.Client.WritePacket(&packets.PublicMineAreaChunk{
+			ChunkX:    chunkX,
+			ChunkY:    chunkY,
+			ChunkData: []byte{},
+		})
+	}
+	player.VisiChunks[index] = false
 }
 
-func (player *MineAreaPlayer) ChunkLoaded(chunkX, chunkY uint) bool {
+func (player *MineAreaPlayer) ChunkLoaded(chunkX, chunkY int32) bool {
 	return player.VisiChunks[chunkY*MAP_CHUNK_WIDTH+chunkX]
 }
 
 func (player *MineAreaPlayer) TryUpdateBlock(pk *packets.PublicMineareaBlockEvent) {
-	chunk_x, chunk_y := ConvertToChunkXY(uint(pk.BlockX), uint(pk.BlockY))
+	chunk_x, chunk_y := ConvertToChunkXY((pk.BlockX), (pk.BlockY))
 	if player.ChunkLoaded(chunk_x, chunk_y) {
 		player.Client.WritePacket(pk)
 	}

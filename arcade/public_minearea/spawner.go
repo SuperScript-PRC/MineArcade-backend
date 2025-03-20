@@ -13,16 +13,16 @@ func SpawnMineAreaMap() *MineAreaMap {
 	// 在距离顶端 10 区块的范围内填充充满空气的区块
 	for height_i := range 10 {
 		for width_i := range MAP_CHUNK_WIDTH {
-			m_map.ModifyChunk(NewEmptyChunk(uint(width_i), uint(MAP_CHUNK_HEIGHT-height_i-1)))
+			m_map.ModifyChunk(NewEmptyChunk(int32(width_i), int32(MAP_CHUNK_HEIGHT-height_i-1)))
 		}
 	}
 	// 剩下的部分直接随机矿物方块
 	for height_i := range MAP_CHUNK_HEIGHT - 10 {
 		for width_i := range MAP_CHUNK_WIDTH {
-			chunk := NewEmptyChunk(uint(width_i), uint(height_i))
+			chunk := NewEmptyChunk(int32(width_i), int32(height_i))
 			for x := range CHUNK_SIZE {
 				for y := range CHUNK_SIZE {
-					chunk.ModifyBlock(uint(x), uint(y), RandomMineBlock())
+					chunk.ModifyBlock(int32(x), int32(y), RandomMineBlock())
 				}
 			}
 			m_map.ModifyChunk(chunk)

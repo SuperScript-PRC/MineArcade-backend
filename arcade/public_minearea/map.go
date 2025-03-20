@@ -19,7 +19,7 @@ type MineAreaMap struct {
 	ChunkData [MAP_CHUNK_WIDTH * MAP_CHUNK_HEIGHT]*Chunk
 }
 
-func (m *MineAreaMap) InChunk(x, y uint) (*Chunk, error) {
+func (m *MineAreaMap) InChunk(x, y int32) (*Chunk, error) {
 	if x >= MAP_BORDER_X || y >= MAP_BORDER_Y {
 		return nil, fmt.Errorf("x or y out of range")
 	}
@@ -29,7 +29,7 @@ func (m *MineAreaMap) InChunk(x, y uint) (*Chunk, error) {
 }
 
 // 较低效的 ModifyBlock.
-func (m *MineAreaMap) ModifyBlock(x, y uint, blockID byte) error {
+func (m *MineAreaMap) ModifyBlock(x, y int32, blockID byte) error {
 	chunk, err := m.InChunk(x, y)
 	if err != nil {
 		return err
@@ -70,7 +70,7 @@ func (m *MineAreaMap) Unmarshal(mdata [TOTAL_BLOCK_NUM]byte) {
 	for j := range MAP_CHUNK_HEIGHT * MAP_CHUNK_WIDTH {
 		chunkX := j % MAP_CHUNK_HEIGHT
 		chunkY := j / MAP_CHUNK_HEIGHT
-		chunk := NewEmptyChunk(uint(chunkX), uint(chunkY))
+		chunk := NewEmptyChunk(int32(chunkX), int32(chunkY))
 		chunk.ChunkData = mdata[j*c : (j+1)*c]
 		m.ModifyChunk(chunk)
 	}
