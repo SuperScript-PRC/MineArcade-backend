@@ -16,7 +16,7 @@ var players = map[string]*MineAreaPlayer{}
 var player_lock = sync.Mutex{}
 
 const PLAYER_SPAWNPOINT_X = MAP_BORDER_X / 2
-const PLAYER_SPAWNPOINT_Y = MAP_BORDER_Y - CHUNK_SIZE*10 - 12
+const PLAYER_SPAWNPOINT_Y = MAP_BORDER_Y - CHUNK_SIZE*8 - 12
 
 func Launch() {
 	var err error
@@ -24,10 +24,6 @@ func Launch() {
 	if err != nil {
 		panic(fmt.Errorf("read map file error: %v", err))
 	}
-	defer func() {
-		SaveMapFile(mmap)
-		pterm.Success.Println("公共矿区地图已保存")
-	}()
 }
 
 func PlayerEntry(cli *clients.NetClient) {
@@ -68,7 +64,12 @@ func PlayerEntry(cli *clients.NetClient) {
 			}
 		} else if pk, ok := p.(*packets.PublicMineareaBlockEvent); ok {
 			// TODO: can modify block without server valid checking
-			mmap.ModifyBlock(pk.BlockX, pk.BlockY, pk.NewBlock)
+			err = mmap.ModifyBlock(pk.BlockX, pk.BlockY, pk.NewBlock)
+			if err != nil {
+				pterm.Error.Println(cli.AuthInfo.AccountName, "发送了不合法的方块操作:", err)
+				cli.Kick("不合法的操作")
+				return
+			}
 			ForOtherPlayers(cli.AuthInfo.UIDStr, func(p *MineAreaPlayer) {
 				p.TryUpdateBlock(pk)
 			})
@@ -127,6 +128,7 @@ func ForOtherPlayers(senderUID string, f func(*MineAreaPlayer)) {
 
 func Exit() {
 	if mmap != nil {
+		pterm.Info.Println("公共矿区地图已保存")
 		SaveMapFile(mmap)
 	}
 }

@@ -8,6 +8,7 @@ import (
 )
 
 func TestServer() {
+	defer fmt.Println("Exit.")
 	listener, err := net.Listen("tcp", ":6000")
 	pterm.Success.Println("MineArcade-backend 已启动")
 	if err != nil {
@@ -22,5 +23,4 @@ func TestServer() {
 		pterm.Info.Println("新连接: ", con.RemoteAddr().String())
 		go HandleClientConnection(con)
 	}
-	fmt.Println("Exit.")
 }
