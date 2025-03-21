@@ -6,7 +6,6 @@ import "MineArcade-backend/protocol"
 type PublicMineareaBlockEvent struct {
 	BlockX   int32
 	BlockY   int32
-	Action   byte
 	NewBlock byte
 }
 
@@ -17,13 +16,11 @@ func (p *PublicMineareaBlockEvent) ID() uint32 {
 func (p *PublicMineareaBlockEvent) Marshal(w *protocol.Writer) {
 	w.Int32(p.BlockX)
 	w.Int32(p.BlockY)
-	w.UInt8(p.Action)
 	w.UInt8(p.NewBlock)
 }
 
 func (p *PublicMineareaBlockEvent) Unmarshal(r *protocol.Reader) {
 	r.Int32(&p.BlockX)
 	r.Int32(&p.BlockY)
-	r.UInt8(&p.Action)
 	r.UInt8(&p.NewBlock)
 }
