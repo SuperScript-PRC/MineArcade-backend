@@ -5,6 +5,7 @@ go 1.23.0
 require (
 	github.com/df-mc/goleveldb v1.1.9
 	github.com/pterm/pterm v0.12.80
+	github.com/google/uuid v1.6.0
 )
 
 require (

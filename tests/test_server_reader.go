@@ -1,7 +1,7 @@
 package tests
 
 import (
-	"MineArcade-backend/protocol"
+	"MineArcade-backend/minearcade-server/protocol"
 	"fmt"
 	"net"
 )

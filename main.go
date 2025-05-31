@@ -1,7 +1,7 @@
 package main
 
 import (
-	"MineArcade-backend/entry"
+	"MineArcade-backend/minearcade-server/entry"
 )
 
 func main() {

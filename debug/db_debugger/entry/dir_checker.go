@@ -1,7 +1,7 @@
 package entry
 
 import (
-	"MineArcade-backend/defines"
+	"MineArcade-backend/minearcade-server/defines"
 	"fmt"
 	"os"
 )

@@ -1,8 +1,8 @@
 package entry
 
 import (
-	"MineArcade-backend/clients/accounts"
-	"MineArcade-backend/clients/player_store"
+	"MineArcade-backend/minearcade-server/clients/accounts"
+	"MineArcade-backend/minearcade-server/clients/player_store"
 	"crypto/md5"
 	"encoding/base64"
 	"fmt"
