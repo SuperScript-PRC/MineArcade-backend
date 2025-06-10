@@ -80,6 +80,10 @@ func (w *Writer) UInt64(x int64) {
 	}
 }
 
+func (w *Writer) Float32(x float32) {
+	binary.Write(w, binary.BigEndian, x)
+}
+
 func (w *Writer) Double(x float64) {
 	binary.Write(w, binary.BigEndian, x)
 }

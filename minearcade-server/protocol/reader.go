@@ -118,18 +118,29 @@ func (r *Reader) Int32(x *int32) error {
 	return nil
 }
 
+func (r *Reader) Float32(x *float32) error {
+	bs, err := r.readBytes(4)
+	if err != nil {
+		return err
+	}
+	buf := bytes.NewBuffer(bs)
+	err = binary.Read(buf, binary.BigEndian, x)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (r *Reader) Double(x *float64) error {
-	var f float64
 	bs, err := r.readBytes(8)
 	if err != nil {
 		return err
 	}
 	buf := bytes.NewBuffer(bs)
-	err = binary.Read(buf, binary.BigEndian, &f)
+	err = binary.Read(buf, binary.BigEndian, x)
 	if err != nil {
 		return err
 	}
-	*x = f
 	return nil
 }
 
