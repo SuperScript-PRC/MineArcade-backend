@@ -14,8 +14,8 @@ const (
 type PublicMineareaPlayerActorData struct {
 	Nickname string
 	UIDStr   string
-	X        float64
-	Y        float64
+	X        float32
+	Y        float32
 	Action   int8
 }
 
@@ -30,15 +30,15 @@ func (ad *PublicMineareaPlayerActorData) NetType() int8 {
 func (ad *PublicMineareaPlayerActorData) Marshal(w *protocol.Writer) {
 	w.StringUTF(ad.Nickname)
 	w.StringUTF(ad.UIDStr)
-	w.Double(ad.X)
-	w.Double(ad.Y)
+	w.Float32(ad.X)
+	w.Float32(ad.Y)
 	w.Int8(ad.Action)
 }
 
 func (ad *PublicMineareaPlayerActorData) Unmarshal(r *protocol.Reader) {
 	r.StringUTF(&ad.Nickname)
 	r.StringUTF(&ad.UIDStr)
-	r.Double(&ad.X)
-	r.Double(&ad.Y)
+	r.Float32(&ad.X)
+	r.Float32(&ad.Y)
 	r.Int8(&ad.Action)
 }
