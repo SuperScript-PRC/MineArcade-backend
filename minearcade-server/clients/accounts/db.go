@@ -3,17 +3,18 @@ package accounts
 import (
 	"MineArcade-backend/minearcade-server/defines"
 	"MineArcade-backend/minearcade-server/protocol"
+	"fmt"
+	"log/slog"
 	"strings"
 
 	"github.com/df-mc/goleveldb/leveldb"
-	"github.com/pterm/pterm"
 )
 
 var db *leveldb.DB
 
 func OpenAccountDB() *leveldb.DB {
 	if db == nil {
-		// pterm.Info.Println("正在读取账号数据库")
+		// fmt.Sprintf("正在读取账号数据库")
 		ldb, err := leveldb.OpenFile(defines.ACCOUNT_DB_PATH, nil)
 		if err != nil {
 			panic(err)
@@ -25,7 +26,7 @@ func OpenAccountDB() *leveldb.DB {
 		w := protocol.NewWriter()
 		ud.Marshal(&w)
 		db.Put([]byte(ud.AccountName), w.GetFullBytes(), nil)
-		pterm.Info.Println("管理员账号未初始化, 已进行初始化:", err)
+		slog.Info(fmt.Sprintf("管理员账号未初始化, 已进行初始化: %v", err))
 	}
 	if _, err := db.Get([]byte("__UIDTotal"), nil); err != nil {
 		b := protocol.NewWriter()

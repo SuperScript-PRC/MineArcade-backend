@@ -2,11 +2,10 @@ package entry
 
 import (
 	"MineArcade-backend/minearcade-server/arcade"
+	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
-
-	"github.com/pterm/pterm"
 )
 
 func WaitClosed() os.Signal {
@@ -14,6 +13,6 @@ func WaitClosed() os.Signal {
 	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
 	sig := <-signalChan
 	arcade.Exit()
-	pterm.Success.Println("MineArcade-backend 已退出")
+	slog.Info("MineArcade-backend 已退出")
 	return sig
 }

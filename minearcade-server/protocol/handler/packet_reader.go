@@ -122,6 +122,17 @@ func (pr *PacketReader) NextPacket() (packets.ClientPacket, error) {
 	}
 }
 
+func (pr *PacketReader) NextPacketWithInterrupt(c chan bool) (packets.ClientPacket, error, bool) {
+	select {
+	case err := <-pr.errQueue:
+		return nil, err, false
+	case pk := <-pr.pkQueue:
+		return pk, nil, false
+	case <-c:
+		return nil, nil, true
+	}
+}
+
 func (pr *PacketReader) WaitForPacket(pkID int, timeout time.Duration) (pk packets.ClientPacket, getted bool) {
 	ch := make(chan packets.ClientPacket)
 	receiver := func(pk packets.ClientPacket) {

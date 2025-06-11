@@ -8,10 +8,9 @@ import (
 	packets_general "MineArcade-backend/minearcade-server/protocol/packets/general"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net"
 	"time"
-
-	"github.com/pterm/pterm"
 )
 
 type ArcadeClient struct {
@@ -69,6 +68,14 @@ func (c *ArcadeClient) NextPacket() (packets.ClientPacket, error) {
 	return c.PacketReader.NextPacket()
 }
 
+// 接收客户端发送的下一个数据包，但是允许中断
+func (c *ArcadeClient) NextPacketWithInterrupt(ch chan bool) (packets.ClientPacket, error, bool) {
+	if !c.Online {
+		return nil, errors.New("client not online"), false
+	}
+	return c.PacketReader.NextPacketWithInterrupt(ch)
+}
+
 func (c *ArcadeClient) WaitForPacket(pkID int, timeout time.Duration) (pk packets.ClientPacket, getted bool) {
 	return c.PacketReader.WaitForPacket(pkID, timeout)
 }
@@ -89,7 +96,7 @@ func (c *ArcadeClient) Kick(kick_msg string) {
 		Message:    kick_msg,
 		StatusCode: 0,
 	})
-	pterm.Warning.Printfln("踢出客户端 %s: %s", c.TCPAddr.String(), kick_msg)
+	slog.Info(fmt.Sprintf("踢出客户端 %s: %s", c.TCPAddr.String(), kick_msg))
 	time.Sleep(time.Second)
 	c.TCPConn.Close()
 	c.Online = false

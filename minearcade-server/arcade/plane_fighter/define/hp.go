@@ -1,0 +1,14 @@
+package define
+
+const PLAYER_HP = 100
+
+const PLAYER_BULLET_HP = 5
+const ENEMY_BULLET_HP = 5
+
+const PLAYER_LASER_HP = 1000
+const ENEMY_LASER_HP = 1000
+
+const PLAYER_MISSILE_HP = 20
+const ENEMY_MISSILE_HP = 20
+
+const ENEMY_PLANE_HP = 5

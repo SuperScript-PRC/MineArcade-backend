@@ -1,0 +1,4 @@
+package define
+
+const SCORE_PLAYER_SHOOT_ENEMY_PLANE = 10
+const SCORE_PLAYER_SHOOT_BOSS_PLANE = 100

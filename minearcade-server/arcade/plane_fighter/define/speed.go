@@ -1,0 +1,17 @@
+package define
+
+// 初始速度
+const PLAYER_BULLET_INIT_VX = 0
+const PLAYER_BULLET_INIT_VY = -12
+
+const PLAYER_LASER_INIT_VX = 0
+const PLAYER_LASER_INIT_VY = -60
+
+const ENEMY_PLANE_INIT_VX = 0
+const ENEMY_PLANE_INIT_VY = 12
+
+const ENEMY_BULLET_INIT_VX = 0
+const ENEMY_BULLET_INIT_VY = 12
+
+const ENEMY_LASER_INIT_VX = 0
+const ENEMY_LASER_INIT_VY = 60

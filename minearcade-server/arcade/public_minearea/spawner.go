@@ -8,8 +8,8 @@ import (
 var rand_gen = rand.New(rand.NewSource(time.Now().UnixNano()))
 
 func SpawnMineAreaMap() *MineAreaMap {
-	t := [MAP_CHUNK_WIDTH * MAP_CHUNK_HEIGHT]*Chunk{}
-	m_map := &MineAreaMap{ChunkData: t}
+	t := [TOTAL_CHUNK_NUM]*Chunk{}
+	m_map := NewMineAreaMap(t)
 	// 在距离顶端 10 区块的范围内填充充满空气的区块
 	for height_i := range 10 {
 		for width_i := range MAP_CHUNK_WIDTH {

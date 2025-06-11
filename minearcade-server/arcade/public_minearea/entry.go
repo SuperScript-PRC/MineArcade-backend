@@ -7,9 +7,9 @@ import (
 	"MineArcade-backend/minearcade-server/defines/kick_msg"
 	packet_arcade "MineArcade-backend/minearcade-server/protocol/packets/arcade"
 	"fmt"
+	"log"
+	"log/slog"
 	"sync"
-
-	"github.com/pterm/pterm"
 )
 
 var mmap *MineAreaMap
@@ -23,13 +23,13 @@ func Launch() {
 	var err error
 	mmap, err = ReadMapFile()
 	if err != nil {
-		panic(fmt.Errorf("read map file error: %v", err))
+		panic(err)
 	}
 }
 
 func PlayerEntry(cli *clients.ArcadeClient) {
 	if !packets_general.ConfirmStartGame(cli, defines.GAMETYPE_PUBLIC_MINEAREA) {
-		pterm.Warning.Printfln("客户端 %v 未确认 StartGame", cli.AuthInfo.AccountName)
+		log.Printf("客户端 %v 未确认 StartGame", cli.AuthInfo.AccountName)
 		return
 	}
 	if mmap == nil {
@@ -68,7 +68,7 @@ func PlayerEntry(cli *clients.ArcadeClient) {
 			// TODO: can modify block without server valid checking
 			err = mmap.ModifyBlock(pk.BlockX, pk.BlockY, pk.NewBlock)
 			if err != nil {
-				pterm.Error.Println(cli.AuthInfo.AccountName, "发送了不合法的方块操作:", err)
+				slog.Error(fmt.Sprintf(cli.AuthInfo.AccountName, "发送了不合法的方块操作:", err))
 				cli.Kick(kick_msg.INVALID_PACKET)
 				return
 			}
@@ -130,7 +130,7 @@ func ForOtherPlayers(senderUID string, f func(*MineAreaPlayer)) {
 
 func Exit() {
 	if mmap != nil {
-		pterm.Info.Println("公共矿区地图已保存")
+		slog.Info("公共矿区地图已保存")
 		SaveMapFile(mmap)
 	}
 }

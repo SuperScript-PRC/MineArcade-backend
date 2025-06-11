@@ -13,8 +13,8 @@ type MineAreaPlayer struct {
 	// X, Y: 在以一方块为单位的坐标系中的位置
 	Map        *MineAreaMap
 	Client     *clients.ArcadeClient
-	X          float64
-	Y          float64
+	X          float32
+	Y          float32
 	VisiChunks []bool
 }
 
@@ -26,7 +26,7 @@ func (player *MineAreaPlayer) UpdateFromPacket(p *packet_arcade.PublicMineareaPl
 func (player *MineAreaPlayer) UpdatePlayerSightChunks() {
 	for i := range MAP_CHUNK_HEIGHT * MAP_CHUNK_WIDTH {
 		chunkX, chunkY := GetChunkXYByIndex(int32(i))
-		if math.Abs(player.X-float64(chunkX*CHUNK_SIZE+HALF_CHUNK_SIZE)) < PLAYER_SIGHT_X && math.Abs(player.Y-float64(chunkY*CHUNK_SIZE+HALF_CHUNK_SIZE)) < PLAYER_SIGHT_Y {
+		if math.Abs(float64(player.X)-float64(chunkX*CHUNK_SIZE+HALF_CHUNK_SIZE)) < PLAYER_SIGHT_X && math.Abs(float64(player.Y)-float64(chunkY*CHUNK_SIZE+HALF_CHUNK_SIZE)) < PLAYER_SIGHT_Y {
 			player.loadChunk(chunkX, chunkY)
 		} else {
 			player.unloadChunk(chunkX, chunkY)
@@ -34,7 +34,7 @@ func (player *MineAreaPlayer) UpdatePlayerSightChunks() {
 	}
 }
 
-func (player *MineAreaPlayer) Teleport(x, y float64) {
+func (player *MineAreaPlayer) Teleport(x, y float32) {
 	player.X = x
 	player.Y = y
 	player.Client.WritePacket(&packet_arcade.PublicMineareaPlayerActorData{
@@ -78,7 +78,7 @@ func (player *MineAreaPlayer) TryUpdateBlock(pk *packet_arcade.PublicMineareaBlo
 	}
 }
 
-func NewPlayer(mmap *MineAreaMap, cli *clients.ArcadeClient, x, y float64) *MineAreaPlayer {
+func NewPlayer(mmap *MineAreaMap, cli *clients.ArcadeClient, x, y float32) *MineAreaPlayer {
 	player := &MineAreaPlayer{
 		Map:        mmap,
 		Client:     cli,

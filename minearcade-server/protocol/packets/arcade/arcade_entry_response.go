@@ -1,4 +1,4 @@
-package packets_lobby
+package packets_arcade
 
 import (
 	"MineArcade-backend/minearcade-server/protocol"

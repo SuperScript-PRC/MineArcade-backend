@@ -8,15 +8,16 @@ import (
 	"MineArcade-backend/minearcade-server/defines/kick_msg"
 	packet_define "MineArcade-backend/minearcade-server/protocol/packets/define"
 	packets_general "MineArcade-backend/minearcade-server/protocol/packets/general"
+	"fmt"
+	"log/slog"
 
 	"github.com/google/uuid"
-	"github.com/pterm/pterm"
 )
 
 func ClientLogin(cli *ArcadeClient) bool {
 	like_handshake_pk, err := cli.NextPacket()
 	if err != nil {
-		pterm.Error.Println("读取数据包出错:", err)
+		slog.Error("读取数据包出错:", slog.String("error", err.Error()))
 		return false
 	}
 	handshake_pk, ok := like_handshake_pk.(*packets_general.ClientHandshake)
@@ -26,7 +27,7 @@ func ClientLogin(cli *ArcadeClient) bool {
 			ServerMessage: "Handshake packet ERROR",
 			ServerVersion: defines.MINEARCADE_VERSION,
 		})
-		pterm.Error.Printfln("握手失败: 客户端握手包错误: ID=%v", like_handshake_pk.ID())
+		slog.Error("握手失败: 客户端握手包错误:", "ID", like_handshake_pk.ID())
 		return false
 	}
 	verify_token := uuid.New().String()
@@ -37,7 +38,7 @@ func ClientLogin(cli *ArcadeClient) bool {
 			ServerVersion: defines.MINEARCADE_VERSION,
 			VerifyToken:   "",
 		})
-		pterm.Error.Printfln("握手失败: 客户端版本 %v < %v", handshake_pk.ClientVersion, defines.MINEARCADE_VERSION)
+		slog.Error(fmt.Sprintf("握手失败: 客户端版本 %v < %v", handshake_pk.ClientVersion, defines.MINEARCADE_VERSION))
 		return false
 	} else if handshake_pk.ClientVersion > defines.MINEARCADE_VERSION {
 		cli.WritePacket(&packets_general.ServerHandshake{
@@ -46,7 +47,7 @@ func ClientLogin(cli *ArcadeClient) bool {
 			ServerVersion: defines.MINEARCADE_VERSION,
 			VerifyToken:   "",
 		})
-		pterm.Error.Printfln("握手失败: 客户端版本 %v > %v", handshake_pk.ClientVersion, defines.MINEARCADE_VERSION)
+		slog.Error(fmt.Sprintf("握手失败: 客户端版本 %v > %v", handshake_pk.ClientVersion, defines.MINEARCADE_VERSION))
 		return false
 	}
 	// TCP Handshake OK
@@ -58,7 +59,7 @@ func ClientLogin(cli *ArcadeClient) bool {
 	})
 	_recv_pk, ok := cli.WaitForPacket(packet_define.IDUDPConnection, configs.UDP_CONNECTION_TIMEOUT)
 	if !ok {
-		pterm.Warning.Printfln("客户端 %s UDPConnection 超时", cli.TCPAddr)
+		slog.Error(fmt.Sprintf("客户端 %s UDPConnection 超时", cli.TCPAddr))
 		cli.Kick(kick_msg.UDP_CONNECTION_TIMEOUT)
 		return false
 	}
@@ -70,13 +71,13 @@ func ClientLogin(cli *ArcadeClient) bool {
 		cli.Kick("Invalid token")
 		return false
 	}
-	pterm.Success.Printfln("%v 握手成功", cli.TCPAddr.String())
+	slog.Info(fmt.Sprintf("%v 握手成功", cli.TCPAddr.String()))
 	// wait login
 	for {
 		// password trial
 		like_login_pk, err := cli.NextPacket()
 		if err != nil {
-			pterm.Error.Println("读取数据包出错:", err)
+			slog.Error(fmt.Sprintf("读取数据包出错: %v", err))
 			return false
 		}
 		login_pk, ok := like_login_pk.(*packets_general.ClientLogin)
@@ -87,7 +88,7 @@ func ClientLogin(cli *ArcadeClient) bool {
 				StatusCode: 1,
 			})
 			//continue
-			pterm.Error.Printfln("%v 登录失败: 客户端登录包错误: ID=%v", cli.TCPAddr.String(), like_login_pk.ID())
+			slog.Error(fmt.Sprintf("%v 登录失败: 客户端登录包错误: ID=%v", cli.TCPAddr.String(), like_login_pk.ID()))
 			// if pk1, ok := like_login_pk.(*packets_general.ClientHandshake); ok {
 			// 	println("ID1:", pk1.ClientVersion)
 			// }
@@ -103,7 +104,7 @@ func ClientLogin(cli *ArcadeClient) bool {
 				Message:    reason,
 				StatusCode: 1,
 			})
-			pterm.Warning.Printfln("%v 登录失败: 账号或密码错误: %v, %v", cli.TCPAddr.String(), login_pk.Username, login_pk.Password)
+			slog.Error(fmt.Sprintf("%v 登录失败: 账号或密码错误: %v, %v", cli.TCPAddr.String(), login_pk.Username, login_pk.Password))
 		} else {
 			cli.WritePacket(&packets_general.ClientLoginResp{
 				Success:    true,
@@ -115,7 +116,7 @@ func ClientLogin(cli *ArcadeClient) bool {
 				panic("Auth failed?? Shouldn't be happened")
 			}
 			cli.InitAuthInfo(userinfo)
-			pterm.Success.Printfln("%v 登录成功, 账号: %v, UID: %v, 昵称: %v", cli.TCPAddr.String(), cli.AuthInfo.AccountName, cli.AuthInfo.UIDStr, cli.AuthInfo.Nickname)
+			slog.Info(fmt.Sprintf("%v 登录成功, 账号: %v, UID: %v, 昵称: %v", cli.TCPAddr.String(), cli.AuthInfo.AccountName, cli.AuthInfo.UIDStr, cli.AuthInfo.Nickname))
 			break
 		}
 	}

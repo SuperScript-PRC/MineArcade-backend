@@ -14,6 +14,6 @@ type ClientPacket interface {
 // 服务端 -> 客户端
 type ServerPacket interface {
 	ID() uint32
-	Marshal(w *protocol.Writer)
 	NetType() int8
+	Marshal(w *protocol.Writer)
 }

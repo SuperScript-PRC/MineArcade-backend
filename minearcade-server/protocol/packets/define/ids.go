@@ -21,10 +21,25 @@ const (
 	IDArcadeEntryRequest
 	IDArcadeEntryResponse
 	IDStartGame
+	// Arcade
+	IDArcadeExitGame
+	IDArcadeMatchJoin
+	IDArcadeMatchJoinResp
+	IDArcadeMatchEvent
+	IDArcadeGameComplete
 	// Arcade:PublicMineArea
 	IDPublicMineareaChunk
 	IDPublicMineareaBlockEvent
 	IDPublicMineareaPlayerActorData
+	// Arcade:PlaneFighter
+	IDPlaneFighterPlayerList
+	IDPlaneFighterAddActor
+	IDPlaneFighterActorEvent
+	IDPlaneFighterStage
+	IDPlaneFighterPlayerMove
+	IDPlaneFighterPlayerEvent
+	IDPlaneFighterTimer
+	IDPlaneFighterScores
 	// Max
 	MaxPacketID
 )

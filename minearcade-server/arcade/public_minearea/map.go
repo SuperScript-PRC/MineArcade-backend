@@ -10,13 +10,18 @@ const MAP_CHUNK_HEIGHT = 32
 const MAP_CHUNK_WIDTH = 32
 const MAP_BORDER_X = MAP_CHUNK_WIDTH * CHUNK_SIZE
 const MAP_BORDER_Y = MAP_CHUNK_HEIGHT * CHUNK_SIZE
+const TOTAL_CHUNK_NUM = MAP_CHUNK_WIDTH * MAP_CHUNK_HEIGHT
 const TOTAL_BLOCK_NUM = MAP_CHUNK_WIDTH * MAP_CHUNK_HEIGHT * CHUNK_SIZE * CHUNK_SIZE
 
 // 地图长宽为 32x32 区块
 // 按地图最左方为 x = 0
 // 地图的最下方为 y = 0
 type MineAreaMap struct {
-	ChunkData [MAP_CHUNK_WIDTH * MAP_CHUNK_HEIGHT]*Chunk
+	ChunkData [TOTAL_CHUNK_NUM]*Chunk
+}
+
+func NewMineAreaMap(chunkData [TOTAL_CHUNK_NUM]*Chunk) *MineAreaMap {
+	return &MineAreaMap{ChunkData: chunkData}
 }
 
 func (m *MineAreaMap) InChunk(x, y int32) (*Chunk, error) {
@@ -77,11 +82,11 @@ func (m *MineAreaMap) Unmarshal(mdata [TOTAL_BLOCK_NUM]byte) {
 }
 
 func ReadMapFile() (*MineAreaMap, error) {
-	_, err := os.Stat(defines.MAP_PATH)
+	_, err := os.Stat(defines.MINEAREA_MAP_PATH)
 	var file *os.File
 	if os.IsNotExist(err) {
 		var bs = SpawnMineAreaMap().Marshal()
-		file, err = os.Create(defines.MAP_PATH)
+		file, err = os.Create(defines.MINEAREA_MAP_PATH)
 		if err != nil {
 			return nil, fmt.Errorf("create map file error: %v", err)
 		}
@@ -93,7 +98,7 @@ func ReadMapFile() (*MineAreaMap, error) {
 		}
 		file.Close()
 	}
-	file, err = os.Open(defines.MAP_PATH)
+	file, err = os.Open(defines.MINEAREA_MAP_PATH)
 	if err != nil {
 		return nil, fmt.Errorf("open map file error: " + err.Error())
 	}
@@ -112,7 +117,7 @@ func ReadMapFile() (*MineAreaMap, error) {
 }
 
 func SaveMapFile(mmap *MineAreaMap) error {
-	file, err := os.OpenFile(defines.MAP_PATH, os.O_WRONLY, 0644)
+	file, err := os.OpenFile(defines.MINEAREA_MAP_PATH, os.O_WRONLY, 0644)
 	if err != nil {
 		return fmt.Errorf("open map file error: " + err.Error())
 	}

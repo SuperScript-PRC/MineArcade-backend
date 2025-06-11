@@ -1,10 +1,10 @@
 package clients
 
 import (
+	"fmt"
+	"log/slog"
 	"net"
 	"sync"
-
-	"github.com/pterm/pterm"
 )
 
 type ArcadeClients struct {
@@ -45,7 +45,7 @@ func (c *ArcadeClients) HandoutUDPBytePacket(bs []byte, udp_addr *net.UDPAddr) {
 		// todo: 假设同一设备上仅有 1 个客户端连接到服务器.
 		cli, ok = c.getClientByIP(ip)
 		if !ok {
-			pterm.Warning.Printfln("No such udp client: %v", udp_addr)
+			slog.Error(fmt.Sprintf("No such udp client: %v", udp_addr))
 			return
 		}
 	}

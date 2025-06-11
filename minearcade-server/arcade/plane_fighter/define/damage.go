@@ -1,0 +1,14 @@
+package define
+
+// HP 和伤害
+
+const PLAYER_BULLET_HURT = 5
+const ENEMY_BULLET_HURT = 5
+
+const PLAYER_LASER_HURT = 10
+const ENEMY_LASER_HURT = 10
+
+const PLAYER_MISSILE_HURT = 50
+const ENEMY_MISSILE_HURT = 10
+
+const ENEMY_PLANE_HURT = 30
