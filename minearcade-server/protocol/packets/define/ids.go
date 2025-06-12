@@ -40,6 +40,7 @@ const (
 	IDPlaneFighterPlayerEvent
 	IDPlaneFighterTimer
 	IDPlaneFighterScores
+	IDPlaneFighterPlayerStatuses
 	// Max
 	MaxPacketID
 )

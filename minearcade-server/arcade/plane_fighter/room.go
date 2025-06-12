@@ -131,6 +131,19 @@ func (r *PlaneFighterRoom) AddClient(cli *clients.ArcadeClient) {
 	r.RoomEvents.JoinEvent <- cli
 }
 
+func (r *PlaneFighterRoom) RemoveClient(cli *clients.ArcadeClient) {
+	var index int
+	for i, c := range r.Clients {
+		if c == cli {
+			index = i
+			break
+		}
+	}
+	r.Clients = append(r.Clients[:index], r.Clients[index+1:]...)
+	delete(r.ClientUID2RuntimeID, cli.UID())
+	r.RoomEvents.JoinEvent <- cli
+}
+
 func (r *PlaneFighterRoom) IsFull() bool {
 	return len(r.Clients) >= r.MaxPlayer
 }
@@ -178,6 +191,19 @@ func (r *PlaneFighterRoom) SendStage() {
 		Players:  nplayers,
 		Entities: nentities,
 	})
+}
+
+func (r *PlaneFighterRoom) SendStatuses() {
+	var statuses []arcade_types.PFPlayerStatus
+	for _, player := range r.Stage.PlayerPlanes {
+		status := arcade_types.PFPlayerStatus{
+			RuntimeID: player.RuntimeID,
+			HP:        player.HP,
+			Bullets:   player.Bullet,
+		}
+		statuses = append(statuses, status)
+	}
+	r.broadcastPacket(&packets_arcade.PlaneFighterPlayerStatuses{Statuses: statuses})
 }
 
 func (r *PlaneFighterRoom) broadcastPacket(pk packets.ServerPacket) {

@@ -50,4 +50,5 @@ var ServerPool = map[uint32]func() ServerPacket{
 	packet_define.IDPlaneFighterStage:             func() ServerPacket { return &packets_arcade.PlaneFighterStage{} },
 	packet_define.IDPlaneFighterTimer:             func() ServerPacket { return &packets_arcade.PlaneFighterTimer{} },
 	packet_define.IDPlaneFighterScores:            func() ServerPacket { return &packets_arcade.PlaneFighterScores{} },
+	packet_define.IDPlaneFighterPlayerStatuses:    func() ServerPacket { return &packets_arcade.PlaneFighterPlayerStatuses{} },
 }

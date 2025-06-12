@@ -15,22 +15,24 @@ type IEntity interface {
 	Hurt(hp int32)
 	IsDied() bool
 	Remove()
+	DeepRemove()
 }
 
 type BasicEntity struct {
-	EntityType int8
-	RuntimeID  int32
-	CenterX    float32
-	CenterY    float32
-	Height     int32
-	Width      int32
-	HP         int32
-	HPMax      int32
-	Removed    bool
-	Tick       int32
-	ExtraData1 int32
-	ExtraData2 int32
-	ExtraData3 int32
+	EntityType  int8
+	RuntimeID   int32
+	CenterX     float32
+	CenterY     float32
+	Height      int32
+	Width       int32
+	HP          int32
+	HPMax       int32
+	Removed     bool
+	DeepRemoved bool
+	Tick        int32
+	ExtraData1  int32
+	ExtraData2  int32
+	ExtraData3  int32
 }
 
 func (e *BasicEntity) GetCenterX() float32 {
@@ -53,8 +55,10 @@ func (e *BasicEntity) GetRuntimeID() int32 {
 	return e.RuntimeID
 }
 
-func (e *BasicEntity) Cure(hp int32) {
+func (e *BasicEntity) Cure(hp int32) (overflow int32) {
+	overflow = max(0, hp-e.HPMax+e.HP)
 	e.HP = min(e.HPMax, e.HP+hp)
+	return
 }
 
 func (e *BasicEntity) Hurt(hp int32) {
@@ -65,8 +69,15 @@ func (e *BasicEntity) IsDied() bool {
 	return e.HP <= 0
 }
 
+// 移除实体, 且将通知客户端实体移除事件。
 func (e *BasicEntity) Remove() {
 	e.Removed = true
+}
+
+// 移除实体, 但是不会通知客户端实体移除事件。
+func (e *BasicEntity) DeepRemove() {
+	e.Removed = true
+	e.DeepRemoved = true
 }
 
 func (e *BasicEntity) SimpleMarshal() arcade_types.PFStageEntity {
@@ -123,11 +134,15 @@ type Player struct {
 	Shield              int32
 	Bullet              int32
 	BulletMax           int32
+	TotalHurt           int32
 	IsFiring            bool
+	Exited              chan bool
 }
 
-func (p *Player) AddBullet(bullets int32) {
+func (p *Player) AddBullet(bullets int32) (overflow int32) {
+	overflow = max(0, bullets-(p.BulletMax-p.Bullet))
 	p.Bullet = min(p.Bullet+bullets, p.BulletMax)
+	return
 }
 
 func (p *Player) ReduceBullet(bullets int32) {
@@ -137,4 +152,13 @@ func (p *Player) ReduceBullet(bullets int32) {
 func (p *Player) AddScore(s *PlaneFighterStage, score int32) {
 	p.Score += score
 	s.AddScoreEvts = append(s.AddScoreEvts, arcade_types.PlaneFighterScore{PlayerRuntimeID: p.RuntimeID, AddScore: score, TotalScore: p.Score})
+}
+
+func (p *Player) Hurt(hp int32) {
+	p.BasicEntity.Hurt(hp)
+	p.TotalHurt += hp
+}
+
+func (p *Player) Exit(win bool) {
+	p.Exited <- win
 }

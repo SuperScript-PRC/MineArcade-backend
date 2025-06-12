@@ -19,11 +19,10 @@ func EntityRunTick(s *PlaneFighterStage, e *MovedEntity) {
 }
 
 func PlayerRunTick(s *PlaneFighterStage, p *Player) {
-	if p.IsFiring {
+	if p.IsFiring && p.Bullet > 0 {
 		if p.Bullet > 0 {
 			p.Tick++
 			if p.Tick%define.PlayerShootDelay == 0 {
-				println("PlayerShoot")
 				PlayerShoot(s, p)
 			}
 		}
@@ -32,23 +31,34 @@ func PlayerRunTick(s *PlaneFighterStage, p *Player) {
 }
 
 func (s *PlaneFighterStage) Weapon2EntityAction(e1 *MovedEntity, e2 *MovedEntity) {
-	if !e1.CanAttackEnemy() {
+	if !e1.CanAttackEnemy() || e1.Removed || e2.Removed {
 		return
 	}
-	switch e1.EntityType {
-	case define.PlayerBullet:
-		if e1.HitTest(e2) {
-			BulletHitEnemyPlane(s, e1, e2)
+	switch e2.EntityType {
+	case define.EnemyPlane:
+		switch e1.EntityType {
+		case define.PlayerBullet:
+			if e1.HitTest(e2) {
+				BulletHitEnemyPlane(s, e1, e2)
+			}
+		case define.PlayerMissile:
+			if e1.HitTest(e2) {
+				MissileHitEnemyPlane(s, e1, e2)
+			}
 		}
-	case define.PlayerMissile:
+	case define.BulletChest:
 		if e1.HitTest(e2) {
-			MissileHitEnemyPlane(s, e1, e2)
+			HitBulletChest(s, e1, e2)
+		}
+	case define.FixingPacket:
+		if e1.HitTest(e2) {
+			HitFixingPacket(s, e1, e2)
 		}
 	}
 }
 
 func (s *PlaneFighterStage) Player2EntityAction(p *Player, e *MovedEntity) {
-	if !p.HitTest(e) {
+	if e.Removed || !p.HitTest(e) {
 		return
 	}
 	switch e.EntityType {
@@ -59,16 +69,23 @@ func (s *PlaneFighterStage) Player2EntityAction(p *Player, e *MovedEntity) {
 	case define.EnemyLaser:
 		LaserHitPlayer(s, p, e)
 	case define.BulletChest:
-		AddBulletStorage(p, e)
+		e.Remove()
+		overflow := p.AddBullet(define.BULLET_CHEST_BULLET_COUNT)
+		p.AddScore(s, overflow*define.BULLET_OVERFLOW_BONUS)
+	case define.FixingPacket:
+		e.Remove()
+		overflow := p.Cure(define.FIXING_PACKET_CURE)
+		p.AddScore(s, overflow*define.CURE_OVERFLOW_BONUS)
 	}
 }
 
 func PlayerShoot(s *PlaneFighterStage, p *Player) {
 	s.AddEntity(NewPlayerBullet(p.CenterX, p.CenterY+float32(p.Height)/2, s.NewRuntimeID(), p.RuntimeID), define.DEBUG_SHOW_BULLET)
+	p.Bullet--
 }
 
 func EnemyPlaneShoot(s *PlaneFighterStage, e *MovedEntity) {
-	s.AddEntity(NewEnemyBullet(e.CenterX, e.CenterY+float32(e.Height)/2, s.NewRuntimeID()), define.DEBUG_SHOW_BULLET)
+	//s.AddEntity(NewEnemyBullet(e.CenterX, e.CenterY+float32(e.Height)/2, s.NewRuntimeID()), define.DEBUG_SHOW_BULLET)
 }
 
 func TNTAddTimer(e *MovedEntity) int32 {
@@ -125,17 +142,36 @@ func TNTExplode(s *PlaneFighterStage, e *MovedEntity) {
 	s.AddEvent(Event{EntityRuntimeID: e.RuntimeID, EventID: EVENT_TNT_EXPLODED})
 }
 
-func AddBulletStorage(p *Player, bc *MovedEntity) {
-	bc.Remove()
-	p.AddBullet(define.BulletChestBulletCount)
-}
-
 // P2E actions
 func BulletHitEnemyPlane(s *PlaneFighterStage, bullet *MovedEntity, eplane *MovedEntity) {
-	bullet.Remove()
+	bullet.DeepRemove()
 	if Hurt(s, eplane, define.PLAYER_BULLET_HURT) {
 		ToScore(s, bullet, define.SCORE_PLAYER_SHOOT_ENEMY_PLANE)
 	}
+}
+
+func HitBulletChest(s *PlaneFighterStage, bullet *MovedEntity, bchest *MovedEntity) {
+	bullet.DeepRemove()
+	bchest.DeepRemove()
+	ToScore(s, bullet, define.SCORE_PLAYER_SHOOT_BULLET_CHEST)
+	p := s.GetPlayer(bullet.ExtraData1)
+	if p != nil {
+		overflow := p.AddBullet(define.BULLET_CHEST_BULLET_COUNT)
+		p.AddScore(s, overflow*define.BULLET_OVERFLOW_BONUS)
+	}
+	s.Events = append(s.Events, Event{EventID: EVENT_COLORFUL_EXPLODE, EntityRuntimeID: bchest.RuntimeID})
+}
+
+func HitFixingPacket(s *PlaneFighterStage, bullet *MovedEntity, fpacket *MovedEntity) {
+	bullet.DeepRemove()
+	fpacket.DeepRemove()
+	ToScore(s, bullet, define.SCORE_PLAYER_SHOOT_FIXING_PACKET)
+	p := s.GetPlayer(bullet.ExtraData1)
+	if p != nil {
+		overflow := p.Cure(define.FIXING_PACKET_CURE)
+		p.AddScore(s, overflow*define.CURE_OVERFLOW_BONUS)
+	}
+	s.Events = append(s.Events, Event{EventID: EVENT_COLORFUL_EXPLODE, EntityRuntimeID: fpacket.RuntimeID})
 }
 
 func LaserHitEnemyPlane(s *PlaneFighterStage, laser *MovedEntity, eplane *MovedEntity) {
@@ -154,7 +190,8 @@ func MissileHitEnemyPlane(s *PlaneFighterStage, missile *MovedEntity, eplane *Mo
 // E2P actions
 
 func EnemyPlaneHitPlayer(s *PlaneFighterStage, p *Player, e *MovedEntity) {
-	e.Remove()
+	s.Events = append(s.Events, Event{EventID: EVENT_DIED, EntityRuntimeID: e.RuntimeID})
+	e.DeepRemove()
 	Hurt(s, p, define.ENEMY_PLANE_HURT)
 }
 
@@ -178,7 +215,7 @@ func Hurt(s *PlaneFighterStage, e IEntity, damage int32) (isDied bool) {
 	e.Hurt(damage)
 	if isDied = e.IsDied(); isDied {
 		s.Events = append(s.Events, Event{EntityRuntimeID: e.GetRuntimeID(), EventID: EVENT_DIED})
-		e.Remove()
+		e.DeepRemove()
 	}
 	return
 }

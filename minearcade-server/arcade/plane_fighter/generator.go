@@ -26,7 +26,6 @@ func (stage *PlaneFighterStage) trySpawnEntities() {
 }
 
 func (stage *PlaneFighterStage) spawnEntities() {
-	println("Spawn")
 	freeSpaces := stage.EntitySlotFreeSpace()
 	if freeSpaces < 5 {
 		return
@@ -38,7 +37,7 @@ func (stage *PlaneFighterStage) spawnEntities() {
 		stage.AddEntity(NewEnemyPlane(0, 0, stage.NewRuntimeID()).RandomX(ran), true)
 	case rNum < define.BulletChestWeight:
 		stage.AddEntity(NewBulletChest(0, 0, stage.NewRuntimeID()).RandomX(ran), true)
-	case rNum < define.FIXING_PACKET_WEIGHT:
+	case rNum < define.FixingPacketWeight:
 		stage.AddEntity(NewFixingPacket(0, 0, stage.NewRuntimeID()).RandomX(ran), true)
 	}
 }

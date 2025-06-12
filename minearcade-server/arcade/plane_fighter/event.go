@@ -9,6 +9,7 @@ const (
 	EVENT_REMOVE_ENTITY
 	EVENT_DIED
 	EVENT_TNT_EXPLODED
+	EVENT_COLORFUL_EXPLODE
 )
 
 type Event = arcade_types.PlaneFighterActorEvent

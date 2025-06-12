@@ -14,12 +14,14 @@ func NewPlayer(runtimeid int32) *Player {
 			Height:     define.PLAYER_HEIGHT,
 			Width:      define.PLAYER_WIDTH,
 			HP:         define.PLAYER_HP,
+			HPMax:      define.PLAYER_HP,
 		},
 		CtrlPlayerRuntimeID: runtimeid,
 		Shield:              0,
-		Bullet:              50,
-		BulletMax:           100,
+		Bullet:              100,
+		BulletMax:           200,
 		IsFiring:            false,
+		Exited:              make(chan bool, 4),
 	}
 }
 

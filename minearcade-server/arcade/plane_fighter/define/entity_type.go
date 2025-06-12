@@ -17,3 +17,7 @@ const (
 func DontUpload(entity_type int32) bool {
 	return entity_type == PlayerBullet || entity_type == EnemyBullet
 }
+
+func IsSyncEntity(entity_type int8) bool {
+	return entity_type != PlayerBullet && entity_type != EnemyBullet
+}

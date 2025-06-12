@@ -33,6 +33,7 @@ func NewStage() *PlaneFighterStage {
 		Ticks:            0,
 		TicksLeft:        define.STAGE_PREPARE_REMAIN_TIME_TICKS,
 		Phase:            0,
+		Exited:           make(chan bool, 4),
 	}
 }
 
@@ -40,11 +41,14 @@ func (s *PlaneFighterStage) RunTick() {
 	s.trySpawnEntities()
 	s.addTick()
 	if s.isEnded() {
-		s.Exited <- true
+		s.Exit()
 		return
 	}
 	for _, p := range s.PlayerPlanes {
 		PlayerRunTick(s, p)
+		if p.IsDied() {
+			p.Exit(false)
+		}
 	}
 	for _, e := range s.Entities {
 		if e == nil {
@@ -130,9 +134,21 @@ func (s *PlaneFighterStage) entitiesGC() {
 	for i, e := range s.Entities {
 		if e != nil && (e.Removed || !e.InStage()) {
 			s.Entities[i] = nil
-			if e.EntityType != define.PlayerBullet && e.EntityType != define.EnemyBullet {
+			if define.IsSyncEntity(e.EntityType) && !e.DeepRemoved {
 				s.AddEvent(Event{EventID: EVENT_REMOVE_ENTITY, EntityRuntimeID: e.GetRuntimeID()})
 			}
 		}
 	}
+}
+
+func (s *PlaneFighterStage) Exit() {
+	for _, entity := range s.Entities {
+		if entity == nil {
+			continue
+		}
+		s.Events = append(s.Events, Event{EventID: EVENT_COLORFUL_EXPLODE, EntityRuntimeID: entity.GetRuntimeID()})
+		entity.DeepRemove()
+	}
+	s.Exited <- true
+	s.entitiesGC()
 }

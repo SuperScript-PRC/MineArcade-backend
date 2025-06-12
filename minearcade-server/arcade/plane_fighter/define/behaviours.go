@@ -1,9 +1,7 @@
 package define
 
-const PlayerShootDelay = 4
+const PlayerShootDelay = 2
 
 const EnemyPlaneShootDelay = 4
 
 const TNTExplodeTick = 40
-
-const BulletChestBulletCount = 200
