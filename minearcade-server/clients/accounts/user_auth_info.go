@@ -35,7 +35,9 @@ func IsPasswordCorrect(username string, passwordMD5 string) (bool, string) {
 	reader := protocol.NewReader(raw_data)
 	user_auth_info := &UserAuthInfo{}
 	user_auth_info.Unmarshal(&reader)
-	if user_auth_info.PasswordMD5 != passwordMD5 {
+	dbPasswordMD5 := user_auth_info.PasswordMD5
+	if dbPasswordMD5[:len(dbPasswordMD5)-2] != passwordMD5[:len(passwordMD5)-2] {
+		// println("PWD:", user_auth_info.PasswordMD5, passwordMD5)
 		return false, "密码错误"
 	} else {
 		return true, ""
