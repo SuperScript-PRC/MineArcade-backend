@@ -2,7 +2,6 @@ package clients
 
 import (
 	"MineArcade-backend/minearcade-server/clients/accounts"
-	"MineArcade-backend/minearcade-server/clients/player_store"
 	"MineArcade-backend/minearcade-server/configs"
 	"MineArcade-backend/minearcade-server/defines"
 	"MineArcade-backend/minearcade-server/defines/kick_msg"
@@ -120,17 +119,6 @@ func ClientLogin(cli *ArcadeClient) bool {
 			break
 		}
 	}
-	store := player_store.ReadPlayerStore(cli.AuthInfo.UIDStr)
-	cli.InitStoreInfo(store)
-	cli.WritePacket(&packets_general.PlayerBasics{
-		Nickname:   store.Nickname,
-		UID:        cli.AuthInfo.UIDStr,
-		Money:      store.Money,
-		Power:      store.Power,
-		Points:     store.Points,
-		Level:      store.Level,
-		Exp:        store.Exp,
-		ExpUpgrade: store.ExpUpgrade,
-	})
+
 	return true
 }

@@ -27,7 +27,11 @@ func (u *UserAuthInfo) Unmarshal(r *protocol.Reader) {
 }
 
 func IsPasswordCorrect(username string, passwordMD5 string) (bool, string) {
-	db = OpenAccountDB()
+	var err error
+	db, err = OpenAccountDB()
+	if err != nil {
+		return false, fmt.Sprintf("数据库打开出错: %v", err)
+	}
 	raw_data, err := db.Get([]byte(username), nil)
 	if err != nil {
 		return false, "用户名不存在"

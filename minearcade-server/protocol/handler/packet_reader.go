@@ -11,9 +11,14 @@ import (
 	"fmt"
 	"net"
 	"time"
+
+	"github.com/google/uuid"
 )
 
-type PacketListener func(packets.ClientPacket)
+type PacketListener struct {
+	id  uuid.UUID
+	fun func(packets.ClientPacket)
+}
 
 type PacketReader struct {
 	TCPConn     net.Conn
@@ -23,6 +28,13 @@ type PacketReader struct {
 	pkQueue     chan packets.ClientPacket
 	errQueue    chan error
 	pkListeners [][]PacketListener
+}
+
+func NewPacketListener(fun func(packets.ClientPacket)) PacketListener {
+	return PacketListener{
+		id:  uuid.New(),
+		fun: fun,
+	}
 }
 
 func NewPacketReader(tcp_conn net.Conn, udp_conn *net.UDPConn, udp_addr *net.UDPAddr) *PacketReader {
@@ -77,7 +89,7 @@ func (pr *PacketReader) acceptTCPPacketsFromClient() {
 		//       但是这样可能导致出现阻塞而没有被发现的情况, 不利调试?
 		for _, pk_listener := range pr.pkListeners[pk.ID()] {
 			packet_is_listened = true
-			pk_listener(pk)
+			pk_listener.fun(pk)
 		}
 		if !packet_is_listened {
 			pr.pkQueue <- pk
@@ -107,7 +119,7 @@ func (pr *PacketReader) ReceiveUDPBytePacket(pkBytes []byte) {
 	// 优先监听常监听包 (udp ver.)
 	for _, pk_listener := range pr.pkListeners[pk.ID()] {
 		packet_is_listened = true
-		pk_listener(pk)
+		pk_listener.fun(pk)
 	}
 	if !packet_is_listened {
 		pr.pkQueue <- pk
@@ -136,9 +148,9 @@ func (pr *PacketReader) NextPacketWithInterrupt(c chan bool) (packets.ClientPack
 
 func (pr *PacketReader) WaitForPacket(pkID int, timeout time.Duration) (pk packets.ClientPacket, getted bool) {
 	ch := make(chan packets.ClientPacket)
-	receiver := func(pk packets.ClientPacket) {
+	receiver := NewPacketListener(func(pk packets.ClientPacket) {
 		ch <- pk
-	}
+	})
 	pr.AddPacketListener(pkID, receiver)
 	defer pr.RemovePacketListener(pkID, receiver)
 	for {
@@ -157,9 +169,9 @@ func (pr *PacketReader) AddPacketListener(id int, listener PacketListener) {
 
 func (pr *PacketReader) RemovePacketListener(id int, listener PacketListener) {
 	for i, l := range pr.pkListeners[id] {
-		if &l == &listener {
+		if l.id == listener.id {
 			pr.pkListeners[id] = append(pr.pkListeners[id][:i], pr.pkListeners[id][i+1:]...)
-			break
+			return
 		}
 	}
 }

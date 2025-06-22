@@ -12,12 +12,12 @@ import (
 
 var db *leveldb.DB
 
-func OpenAccountDB() *leveldb.DB {
+func OpenAccountDB() (*leveldb.DB, error) {
 	if db == nil {
 		// fmt.Sprintf("正在读取账号数据库")
 		ldb, err := leveldb.OpenFile(defines.ACCOUNT_DB_PATH, nil)
 		if err != nil {
-			panic(err)
+			return nil, err
 		}
 		db = ldb
 	}
@@ -33,11 +33,15 @@ func OpenAccountDB() *leveldb.DB {
 		b.Double(0)
 		db.Put([]byte("__UIDTotal"), b.GetFullBytes(), nil)
 	}
-	return db
+	return db, nil
 }
 
 func GetUserAuthInfo(username string) (*UserAuthInfo, bool) {
-	db = OpenAccountDB()
+	var err error
+	db, err = OpenAccountDB()
+	if err != nil {
+		return nil, false
+	}
 	if strings.HasPrefix(username, "__") {
 		return nil, false
 	}

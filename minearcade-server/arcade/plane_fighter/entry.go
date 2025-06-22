@@ -17,6 +17,9 @@ func PlayerPrejoinEntry(cli *clients.ArcadeClient) (room *PlaneFighterRoom, join
 		cli.Kick(kick_msg.BROKEN_PACKET)
 		return
 	}
+	if _, ok := _pk.(*packets_arcade.ArcadeExitGame); ok {
+		return
+	}
 	pk, ok := _pk.(*packets_arcade.ArcadeMatchJoin)
 	if !ok {
 		cli.Kick(kick_msg.INVALID_PACKET)
@@ -45,15 +48,17 @@ func PlayerPrejoinEntry(cli *clients.ArcadeClient) (room *PlaneFighterRoom, join
 	return
 }
 func PlayerEntry(cli *clients.ArcadeClient, room *PlaneFighterRoom) {
+	defer room.RemoveClient(cli)
 	stg := room.Stage
 	room.WaitMatchReady(cli)
 	player := NewPlayer(room.GetClientRuntimeID(cli))
 	room.Stage.AddPlayer(player)
+	println("Wait StartGame")
 	_, getted := cli.WaitForPacket(packet_define.IDStartGame, time.Second*10)
 	if !getted {
-		// todo: StartGame timeout
-		// do sth?
-		println("timeout (todoooo)")
+		// todo: this is too violent
+		cli.Kick(kick_msg.STARTGAME_TIMEOUT)
+		return
 	}
 	room.AddGameReadyCount()
 	room.WaitGameReady()
@@ -80,6 +85,8 @@ func PlayerEntry(cli *clients.ArcadeClient, room *PlaneFighterRoom) {
 			case packets_arcade.PFPEventStopFire:
 				stg.PlayerStopFire(room.GetClientRuntimeID(cli))
 			}
+		case *packets_arcade.ArcadeExitGame:
+			return
 		}
 	}
 }
@@ -101,7 +108,7 @@ func RoomEntry(room *PlaneFighterRoom) {
 		if stage.Ticks%define.TPS == 0 {
 			room.broadcastPacket(&packets_arcade.PlaneFighterTimer{SecondsLeft: (stage.TicksLeft / define.TPS)})
 		}
-		if !room.CheckAllOnline() {
+		if !room.CheckAllOnline() || len(room.Clients) == 0 {
 			interrupted = true
 			break
 		}

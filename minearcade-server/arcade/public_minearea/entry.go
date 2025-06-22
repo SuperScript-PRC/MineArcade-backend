@@ -50,7 +50,8 @@ func PlayerEntry(cli *clients.ArcadeClient) {
 			return
 		}
 		nowtime := float64time()
-		if pk, ok := p.(*packet_arcade.PublicMineareaPlayerActorData); ok {
+		switch pk := p.(type) {
+		case *packet_arcade.PublicMineareaPlayerActorData:
 			player.UpdateFromPacket(pk)
 			if nowtime-player_move_broadcast_cd > 0.05 {
 				// 避免过快收到移动数据包
@@ -66,7 +67,7 @@ func PlayerEntry(cli *clients.ArcadeClient) {
 				player_update_chunk_cd = nowtime
 				player.UpdatePlayerSightChunks()
 			}
-		} else if pk, ok := p.(*packet_arcade.PublicMineareaBlockEvent); ok {
+		case *packet_arcade.PublicMineareaBlockEvent:
 			// todo: warning: can modify block without server valid checking
 			err = mmap.ModifyBlock(pk.BlockX, pk.BlockY, pk.NewBlock)
 			if err != nil {
@@ -77,11 +78,14 @@ func PlayerEntry(cli *clients.ArcadeClient) {
 			ForOtherPlayers(cli.AuthInfo.UIDStr, func(p *MineAreaPlayer) {
 				p.TryUpdateBlock(pk)
 			})
-		} else {
+		case *packet_arcade.ArcadeExitGame:
+			return
+		default:
 			cli.Kick(kick_msg.INVALID_PACKET)
 			return
 		}
 	}
+
 }
 
 func AddPlayer(player *MineAreaPlayer) {

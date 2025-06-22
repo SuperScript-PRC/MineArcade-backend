@@ -141,6 +141,7 @@ func (s *PlaneFighterStage) entitiesGC() {
 	}
 }
 
+// 正常退出舞台
 func (s *PlaneFighterStage) Exit() {
 	for _, entity := range s.Entities {
 		if entity == nil {

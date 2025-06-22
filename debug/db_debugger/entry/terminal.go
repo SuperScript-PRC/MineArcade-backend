@@ -9,7 +9,11 @@ import (
 )
 
 func Main() {
-	account_db := accounts.OpenAccountDB()
+	account_db, err := accounts.OpenAccountDB()
+	if err != nil {
+		fmt.Printf("账号数据库打开失败: %v", err)
+		return
+	}
 	store_db := player_store.OpenPlayerStoreDB()
 	defer account_db.Close()
 	defer store_db.Close()
@@ -80,11 +84,15 @@ func AddAccount() {
 }
 
 func RemoveAccount() {
-	account_db := accounts.OpenAccountDB()
+	account_db, err := accounts.OpenAccountDB()
+	if err != nil {
+		fmt.Printf("账号数据库打开失败: %v\n", err)
+		return
+	}
 	store_db := player_store.OpenPlayerStoreDB()
 	var account_name string
 	fmt.Print("请输入账号名: ")
-	_, err := fmt.Scanf("%s ", &account_name)
+	_, err = fmt.Scanf("%s ", &account_name)
 	if err != nil {
 		fmt.Println("输入错误")
 		return
@@ -119,7 +127,11 @@ func CheckAccount() {
 }
 
 func ListAccounts() {
-	account_db := accounts.OpenAccountDB()
+	account_db, err := accounts.OpenAccountDB()
+	if err != nil {
+		fmt.Printf("数据库打开出错: %v\n", err)
+		return
+	}
 	iter := account_db.NewIterator(nil, nil)
 	defer iter.Release()
 	for iter.Next() {
