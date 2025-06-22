@@ -71,7 +71,7 @@ func AddAccount() {
 		fmt.Println("输入错误")
 		return
 	}
-	pwdMD5 := md5.Sum([]byte(password))
+	pwdMD5 := md5.Sum([]byte(password + "minearc#01"))
 	account := accounts.NewUserAuthInfo(account_name, base64.StdEncoding.EncodeToString(pwdMD5[:]), nickname)
 	store := player_store.NewPlayerStore()
 	accounts.SaveUserAuthInfo(account)
