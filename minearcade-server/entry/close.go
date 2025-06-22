@@ -8,11 +8,13 @@ import (
 	"syscall"
 )
 
-func WaitClosed() os.Signal {
+func WaitClosed() chan os.Signal {
 	signalChan := make(chan os.Signal, 1)
 	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
-	sig := <-signalChan
+	return signalChan
+}
+
+func CloseAll() {
 	arcade.Exit()
 	slog.Info("MineArcade-backend 已退出")
-	return sig
 }

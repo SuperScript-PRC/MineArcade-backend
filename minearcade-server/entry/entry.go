@@ -9,11 +9,12 @@ import (
 func Entry() {
 	slog.Info("MineArcade-backend 启动中...")
 	CreateDataDirs()
-	mcore := core.NewCore()
+	arcadeCore := core.NewCore()
 	clientEntry := func(tcp_conn net.Conn, udp_conn *net.UDPConn) {
-		ClientConnEntry(mcore.Clients, tcp_conn, udp_conn)
+		ClientConnEntry(arcadeCore.Clients, tcp_conn, udp_conn)
 	}
-	mcore.Server.SetConnHandler(clientEntry)
-	mcore.Run()
-	WaitClosed()
+	arcadeCore.Server.SetConnHandler(clientEntry)
+	arcadeCore.Run()
+	<-WaitClosed()
+	CloseAll()
 }
