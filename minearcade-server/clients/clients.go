@@ -43,6 +43,7 @@ func (c *ArcadeClients) HandoutUDPBytePacket(bs []byte, udp_addr *net.UDPAddr) {
 	if !ok {
 		ip := udp_addr.IP
 		// todo: 假设同一设备上仅有 1 个客户端连接到服务器.
+		// future: 更改逻辑为接受带有 uniqueID 的 UDP 包以确认此 UDP 包来源于哪个客户端
 		cli, ok = c.getClientByIP(ip)
 		if !ok {
 			slog.Error(fmt.Sprintf("No such udp client: %v", udp_addr))

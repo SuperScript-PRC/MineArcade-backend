@@ -77,7 +77,7 @@ func (r *PlaneFighterRoom) ActiveMatcher() {
 				return
 			}
 		}
-		// todo: 多人游戏 :通用接口
+		// todo: 多人游戏: 通用接口
 	}
 }
 
@@ -98,7 +98,7 @@ func (r *PlaneFighterRoom) AddGameReadyCount() {
 		r.RoomEvents.GameReady <- true
 		r.RoomEvents.GameAlreadyReady = true
 		// OMG, THIS IS SOOOOOO MESSY!!!
-		// todo: 以更优雅的方式启动 StageEntry
+		// todo: 以更优雅的方式启动 RoomEntry
 		go RoomEntry(r)
 	}
 }
@@ -107,7 +107,7 @@ func (r *PlaneFighterRoom) WaitGameReady() {
 	if r.RoomEvents.GameAlreadyReady {
 		return
 	}
-	println("Waiting")
+	// println("Waiting")
 	<-r.RoomEvents.GameReady
 }
 

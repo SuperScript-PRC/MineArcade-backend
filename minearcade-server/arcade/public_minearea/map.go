@@ -112,7 +112,7 @@ func ReadMapFile() (*MineAreaMap, error) {
 		return nil, fmt.Errorf("map file size error: %v", n)
 	}
 	mmap := &MineAreaMap{}
-	mmap.Unmarshal([262144]byte(content))
+	mmap.Unmarshal([TOTAL_BLOCK_NUM]byte(content))
 	return mmap, nil
 }
 

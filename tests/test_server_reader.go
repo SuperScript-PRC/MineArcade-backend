@@ -6,6 +6,8 @@ import (
 	"net"
 )
 
+// 测试 Reader / Writer
+
 func HandleConnection(conn net.Conn) {
 	defer func() {
 		e := recover()
@@ -14,10 +16,7 @@ func HandleConnection(conn net.Conn) {
 		}
 		_ = conn.Close()
 	}()
-	// writer := protocol.Writer{}
-	// writer.String("Hello 大家！")
-	// conn.Write(writer.GetFullBytes())
-	reader := protocol.Reader{}
+	reader := &protocol.Reader{}
 	var str string
 	bs := make([]byte, 1024)
 	n, _ := conn.Read(bs)
@@ -25,7 +24,7 @@ func HandleConnection(conn net.Conn) {
 	fmt.Printf("bts=%v\n", bs)
 	reader.StringUTF(&str)
 	fmt.Println("str=" + str)
-	writer := protocol.Writer{}
+	writer := &protocol.Writer{}
 	writer.StringUTF("Hello 大家！")
 	conn.Write(writer.GetFullBytes())
 	err := conn.Close()

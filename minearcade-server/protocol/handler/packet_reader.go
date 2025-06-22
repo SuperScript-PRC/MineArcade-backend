@@ -57,7 +57,6 @@ func (pr *PacketReader) acceptTCPPacketsFromClient() {
 		}
 		bs := make([]byte, packetSize)
 		n, err := pr.TCPConn.Read(bs)
-		// todo: ?
 		if err != nil {
 			pr.errQueue <- err
 			return
@@ -74,7 +73,8 @@ func (pr *PacketReader) acceptTCPPacketsFromClient() {
 		}
 		var packet_is_listened = false
 		// 优先监听常监听包
-		// todo: 可能造成阻塞
+		// todo: 可能造成阻塞, 可能需要换成 go pk_listener(pk)
+		//       但是这样可能导致出现阻塞而没有被发现的情况, 不利调试?
 		for _, pk_listener := range pr.pkListeners[pk.ID()] {
 			packet_is_listened = true
 			pk_listener(pk)
@@ -104,6 +104,7 @@ func (pr *PacketReader) ReceiveUDPBytePacket(pkBytes []byte) {
 		return
 	}
 	var packet_is_listened = false
+	// 优先监听常监听包 (udp ver.)
 	for _, pk_listener := range pr.pkListeners[pk.ID()] {
 		packet_is_listened = true
 		pk_listener(pk)

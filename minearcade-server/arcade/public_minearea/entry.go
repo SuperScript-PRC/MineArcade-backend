@@ -54,6 +54,7 @@ func PlayerEntry(cli *clients.ArcadeClient) {
 			player.UpdateFromPacket(pk)
 			if nowtime-player_move_broadcast_cd > 0.05 {
 				// 避免过快收到移动数据包
+				// todo: 应该直接踢出发送过快的客户端
 				player_move_broadcast_cd = nowtime
 				ForOtherPlayers(cli.AuthInfo.UIDStr, func(p *MineAreaPlayer) {
 					p.Client.WritePacket(pk)
@@ -61,11 +62,12 @@ func PlayerEntry(cli *clients.ArcadeClient) {
 			}
 			if nowtime-player_update_chunk_cd > 0.5 {
 				// 避免过于频繁地处理视野问题
+				// 0.5s 更新一次区块视野
 				player_update_chunk_cd = nowtime
 				player.UpdatePlayerSightChunks()
 			}
 		} else if pk, ok := p.(*packet_arcade.PublicMineareaBlockEvent); ok {
-			// TODO: can modify block without server valid checking
+			// todo: warning: can modify block without server valid checking
 			err = mmap.ModifyBlock(pk.BlockX, pk.BlockY, pk.NewBlock)
 			if err != nil {
 				slog.Error(fmt.Sprintf(cli.AuthInfo.AccountName, "发送了不合法的方块操作:", err))

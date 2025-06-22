@@ -15,7 +15,7 @@ func ConfirmStartGame(cli *clients.ArcadeClient, arcadeGameType int8) bool {
 	}
 	start_game_pk, ok := pk.(*packets_general.StartGame)
 	if !ok {
-		println("invalid:", pk.ID())
+		// println("invalid:", pk.ID())
 		cli.Kick("Need StartGame")
 		return false
 	}
